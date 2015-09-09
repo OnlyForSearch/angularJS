@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html >
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <script>
+       var app= angular.module("app",[]);
+       app.controller("FirstContrller", function ($scope) {
+            $scope.counter=0;
+
+
+           $scope.add= function (amount) {
+               $scope.counter+=amount;
+           }
+           $scope.sub= function (amount) {
+               $scope.counter-=amount;
+           }
+
+
+       });
+//        控制器的嵌套(作用域包含作用域)
+        app.controller("ParentController", function ($scope) {
+            $scope.person={greeted:false};
+        });
+        app.controller("ChildController", function ($scope) {
+            $scope.sayHello= function () {
+                $scope.person.name='Ari Lerner';
+            }
+        });
+
+    </script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<div ng-app="app" ng-controller="FirstContrller">
+    <h4>The simplest adding machine ever</h4>
+    <button ng-click="add(1)">add</button>
+    <a ng-click="sub(1)">sub</a>
+    <h4>Current count: {{ counter }}</h4>
+    <hr />
+    <h3> 控制器的嵌套(作用域包含作用域)</h3>
+    <h5>，点击按钮时，可以在ChildController中访问ParentController中$scope.person的,值，就好像person对象定义在ChildController的$scope中一样。</h5>
+    <div  ng-controller="ParentController">
+        <div ng-controller="ChildController"><a ng-click="sayHello()">SayHello</a>
+        </div>
+        {{person}}
+    </div>
+</div>
+
+</body>
+</html>

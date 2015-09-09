@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html >
+<head lang="en" >
+    <script src="../../components/angular.js"></script>
+    <script src="../../scripts/controller.js"></script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body >
+    <div ng-app="myApp"  ng-controller="PhoneListCtrl">search: <input type="text" ng-model="query"/>
+        <p>Search keywords:{{query}}</p>
+        Order by :<select name="" id="" ng-model="orederProp">
+            <option value="name">Alphabetical</option>
+            <option value="age">Newest</option>
+        </select>
+        <p>orderBy:{{orederProp}}</p>
+        <ul>
+            1+1={{1+1}}
+            <li ng-repeat="phone in phones|filter:query|orderBy:orederProp">
+                {{phone.name}}
+                <p>{{phone.snippet}}</p>
+                <p>{{phone.id}}</p>
+                <p>{{phone.imageUrl}}</p>
+            </li>
+        </ul>
+        <ul>
+            连接加图片
+            <li ng-repeat="phone in phones | filter:query | orderBy:orderProp" class="thumbnail">
+                <a href="#/phones/{{phone.id}}" class="thumb"><img ng-src="{{phone.imageUrl}}"></a>
+                <a href="#/phones/{{phone.id}}">{{phone.name}}</a>
+                非法路径: <a href="#/phones/{{phone.id}}" class="thumb"><img src="{{phone.imageUrl}}"></a>
+                <p>{{phone.snippet}}</p>
+            </li>
+
+        </ul>
+
+    </div>
+
+    <hr />
+    <srcipt>
+     <!--   var app = angular.module('myApp2', []);
+        app.controller('customersCtrl', function($scope, $http) {
+        $http.get("http://www.runoob.com/try/angularjs/data/Customers_JSON.php")
+        .success(function (response) {$scope.names = response.records;});
+        });-->
+    </srcipt>
+    <div ng-app="myApp2" ng-controller="PhoneListCtrl2">
+            {{}}
+       <!-- <ul>
+            <li ng-repeat="x in names">
+                {{ x.Name + ', ' + x.Country }}
+            </li>
+        </ul>-->
+        <ul>
+            1+1={{1+1}}
+            <li ng-repeat="phone in phones|filter:query|orderBy:orederProp">
+                {{phone.name}}
+                <p>{{phone.snippet}}</p>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>

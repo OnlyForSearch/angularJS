@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<div ng-app="myApp" ng-init="firstName='John'" ng-controller="myCtrl">
+    <p>在输入框尝试输入:</p>
+
+    <p>姓名: <input type="text" ng-model="name" /></p>
+
+    <p ng-bind="name"></p>
+
+    <p>FirstName:<span ng-bind="firstName"></span></p>
+
+    <p>表达式 firstName:{{firstName}}</p>
+    fName:<input type="text" ng-model="fName" /><br />
+    lastName:<input type="text" ng-model="lastName" /><br />
+    控制器:{{fName +""+lastName}}
+    <hr />
+
+    <div ng-init="person={firstName:'John',lastName:'Doe'}">
+
+        <p>对象属性:姓为 {{ person.lastName }}</p>
+
+    </div>
+    <hr />
+    <div ng-init="points=[1,2,3,4,5,6]">
+        <p>数组第二个值{{points[1]}}</p>
+    </div>
+    <hr />
+    <div ng-init="quantity=1;price=1">
+        <p>数据绑定:价格计算器</p>
+        <input type="number" ng-model="quantity" /><input type="number" ng-model="price" />
+
+        <p><b>总价:</b>{{quantity*price}}</p>
+    </div>
+    <hr />
+    <div ng-init="names=['Jani','Hege','Kai']">
+        <p>>使用 ng-repeat 来循环数组</p>
+        <ul>
+            <li ng-repeat="name in names">
+                {{name}}
+            </li>
+        </ul>
+    </div>
+    <div ng-init="persons=[
+                {name:'Jani',country:'Norway'},
+                {name:'Hege',country:'Sweden'},
+                {name:'Kai',country:'Denmark'}]">
+        <p>循环对象</p>
+        <ul>
+            <li ng-repeat="person in persons">
+                {{person.name+","+person.country}}
+            </li>
+        </ul>
+    </div>
+    <hr />
+    <div>
+        <h1 >现在时间 hello:{{clock}}</h1>
+    </div>
+
+</div>
+
+
+<script>
+    var app = angular.module("myApp", []);//第一个表示模块名,[]表示依赖列表
+    app.controller('myCtrl', function ($scope, $timeout) {
+        $scope.fName = 'Green';
+        $scope.lastName = 'Doe'
+
+        var updateClock=function(){
+            $scope.clock=new Date();
+            $timeout(function(){
+                updateClock();
+            },1000);
+        };
+        updateClock();
+
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html ng-app="myApp" ng-controller="myCtrl">
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<div>
+    <h1>优化后的绑定形式:{{clock.now}}</h1>
+</div>
+
+<script>
+    var app=angular.module("myApp",[]);
+    app.controller("myCtrl",function($scope){//作用域$scope
+        $scope.clock={now:new Date()};
+
+        var updateLock= function () {
+            $scope.clock.now=new Date();
+        }
+        setInterval(function () {
+            $scope.$apply(updateLock);
+        },1000);
+        updateLock();
+
+
+
+    });
+</script>
+</body>
+</html>

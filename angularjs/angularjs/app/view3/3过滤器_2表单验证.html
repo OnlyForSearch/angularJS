@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html ng-app="myApp" ng-controller="DemoController">
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <script>
+        var app = angular.module("myApp", []);
+        app.controller('DemoController', ['$scope', '$filter',
+            function ($scope, $filter) {//$filter来调用过滤器
+                $scope.name = $filter('lowercase')('Ari');//使用过滤器：使用过滤器：
+                $scope.today = new Date();
+                //isCapitalized函数的功能是根据首字母是否为大写返回true或false，
+                $scope.isCapitalized = function (str) {
+                    return str[0] == str[0].toUpperCase();
+                };
+            }]);
+    </script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<h1>表单验证不仅能给用户提供有用的反馈，同时也能保护我们的Web应用不会被恶意或者错误
+    的输入所破坏。我们要在Web前端尽力保护后端。</h1>
+
+<form name="form" novalidate><!--如果想要屏蔽浏览器对表单的默认验证行为，可以在表单元素上添加novalidate标记。-->
+    <label name="email">Your email</label>
+    <input type="email" name="email" ng-model="email" placeholder="Email Address" />
+    必填项:<input type="text" required/><br />
+    最小长度AngularJS指令ng-minleng= "{number}"：:
+    <input type="text" ng-minlength="5"/><br />
+    最大长度在输入字段上使用AngularJS指令 ng-maxlength="{number}"：:
+    <input type="text" ng-maxlength="20"/><br />
+    模式匹配ng-pattern="/PATTERN/"来确保输入能够匹配指定的正则表达式:
+    <input type="text" ng-pattern="[a-zA-Z]"/><br />
+    电子邮件将input的类型设置为email即可：:
+    <input type="email" name="email" ng-model="user.email" /><br />
+    数字证输入内容是否是数字，将input的类型设置为number:
+    <input type="number" name="age" ng-model="user.age" /><br />
+    验证输入内容是否是URL，将input的类型设置为 url：
+    <input type="url" name="homepage" ng-model="user.facebook_url" /><br />
+</form>
+
+</body>
+</html>

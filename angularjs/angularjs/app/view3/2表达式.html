@@ -1,0 +1,37 @@
+<!doctype html>
+<html ng-app="myApp">
+<head>
+    <title>Parse Expression Example</title>
+    <script src="../components/angular.js"></script>
+    <script>
+        angular.module('myApp', [])
+                .controller('MyController',
+                ['$scope', '$parse', function ($scope, $parse) {
+                    //将$parse服务注入到控制器中，然后调用它就可以实现手动解析表达式。举例来说，如果页 面上有一个输入框绑定到了expr变量上
+                    $scope.person = {
+                        name: "Ari Lerner"
+                    };
+
+                    $scope.$watch('expr', function (newVal, oldVal, scope) {
+                        if (newVal !== oldVal) {
+                            // 用该表达式设置parseFun
+                            var parseFun = $parse(newVal);
+                            // 获取经过解析后表达式的值
+                            scope.parsedExpr = parseFun(scope);
+                        }
+                    });
+                }]);
+
+    </script>
+</head>
+<body>
+
+<div ng-controller="MyController">
+    <input ng-model="expr"
+           type="text"
+           placeholder="Enter an expression" />
+
+    <div>{{ parsedExpr }}</div>
+</div>
+</body>
+</html>
