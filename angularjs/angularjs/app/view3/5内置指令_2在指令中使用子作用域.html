@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <script !src="">
+
+    </script>
+    <style>
+        .most{
+            color: lawngreen;
+        }
+        .odd{
+            background: blue;
+        }
+        .even{
+            background: red;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<h2>JavaScript对象要么是值复制要么是引用复制。字符串、数字和布尔型变量是值
+    复制。数组、对象和函数则是引用复制。
+    如果将模型对象的某个属性设置为字符串，它会通过引用进行共享，因此在子$scope中修改
+    属性也会修改父$scope中的这个属性。下面的例子展示了正确的做法：</h2>
+<h3 class="most">ng-controller</h3>
+<div ng-controller="SomeCtrl">
+    {{ someModel.someValue }}
+    <button ng-click="someAction()">Communicate to child</button>
+    <div ng-controller="ChildCtrl">
+        {{ someModel.someValue }}
+        <button ng-click="childAction()">Communicate to parent</button>
+    </div>
+</div>
+
+<script>
+    angular.module('myApp', [])
+            .controller('SomeCtrl', function ($scope) {
+                // best practice, always use a model
+                $scope.someModel = {
+                    someValue: 'hello computer'
+                }
+                $scope.someAction = function () {
+                    $scope.someModel.someValue = 'hello human, from parent';
+                };
+            })
+            .controller('ChildCtrl', function ($scope) {
+                $scope.childAction = function () {
+                    $scope.someModel.someValue = 'hello human, from child';
+                };
+            })
+            .controller('PeopelCtrl', function ($scope) {
+               $scope.peopers=[
+                    {name:'Ari',city:'San Francisco'},
+                    {name:'Erik',city:'Seatte'}
+                ]
+            })
+            .controller('EquationController', function ($scope) {
+                $scope.equation={};
+                $scope.change= function () {
+                    $scope.equation.output = parseInt($scope.equation.x)+2;
+                }
+            })
+            //硬编码的JSON数据，把它假设成是从服务器返回的
+            .controller('FormController', function ($scope) {
+                $scope.fields = [
+                    {placeholder: 'Username', isRequired: true},
+                    {placeholder: 'Password', isRequired: true},
+                    {placeholder: 'Email (optional)', isRequired: false}
+                ];
+                $scope.submitForm = function () {
+                    alert("it works!");
+                };
+            })
+            .controller('CountController', function ($scope) {
+                $scope.decrement= function () {
+                    $scope.count-=1;
+                }
+            })
+            .controller('CityController', function ($scope) {
+                $scope.cities = [
+                    {name: 'Seattle'},
+                    {name: 'San Francisco'},
+                    {name: 'Chicago'},
+                    {name: 'New York'},
+                    {name: 'Boston'}
+                ];
+            })
+            .controller('FormController2', function ($scope) {
+                $scope.person = {
+                    name: null
+                };
+                $scope.people = [];
+                $scope.submit = function () {
+                    if ($scope.person.name) {
+                        $scope.people.push({name: $scope.person.name});
+                        $scope.person.name = '';
+                    }
+                };
+            })
+            .controller('LotteryController', function ($scope) {
+                $scope.generateNumber = function () {
+                    return Math.floor((Math.random() * 10) + 1);
+                };
+            })
+            ;
+</script>
+<hr />
+<h2 class="most">ng-switch</h2>
+<h3>这个指令和ng-switch-when及on="propertyName"一起使用，可以在propertyName发生变
+    化时渲染不同指令到视图中。</h3>
+<input type="text"  ng-model="person.name"/>
+输入Ari改变值
+<div ng-switch on="person.name">
+    <p ng-switch-default="">and ther winner is</p>
+    <h1 ng-switch-when="Ari">{{person.name}}</h1>
+</div>
+<hr />
+<h2 class="most">ng-view:</h2>
+指令用来设置将被路由管理和放置在HTML中的视图的位置。
+<hr />
+<h2 class="most">ng-if</h2>
+<span>ng-if同no-show和ng-hide指令最本质的区别是，它不是通过CSS显示或隐藏DOM节点，而
+是真正生成或移除节点。
+当一个元素被ng-if从DOM中移除，同它关联的作用域也会被销毁。而且当它重新加入DOM
+中时，会通过原型继承从它的父作用域生成一个新的作用域。
+，ngIf重新创建元素时用的是它们编译后的状态。
+</span>
+<h4>内部的代码加载之后被jQuery修改过（例如用.addClass），那么当ng-if的表达式值为false时，
+    这个DOM元素会被移除，表达式再次成为true时这个元素及其内部的子元素会被重新插入
+    DOM，此时这些元素的状态会是它们的原始状态，而不是它们上次被移除时的状态。也就是说
+    无论用jQuery的.addClass添加了什么类都不会存在了。</h4>
+
+<div ng-if="2+2==5">Won't see this DOM node, not even in the source code</div>
+<div ng-if="2+2==4">
+    Hi, I do exist</div>
+<hr />
+<h2 class="most">ng-repeat</h2>
+<pre>
+    ng-repeat用来遍历一个集合或为集合中的每个元素生成一个模板实例。集合中的每个元素
+            都会被赋予自己的模板和作用域。同时每个模板实例的作用域中都会暴露一些特殊的属性。
+ $index：遍历的进度（0...length-1）。
+ $first：当元素是遍历的第一个时值为true。
+ $middle：当元素处于第一个和最后元素之间时值为true。
+ $last：当元素是遍历的最后一个时值为true。
+ $even：当$index值是偶数时值为true。
+ $odd：当$index值是奇数时值为true。
+</pre>
+<ul ng-controller="PeopelCtrl">
+    <li>用$odd和$even来制作一个红蓝相间的列表。记住， JavaScript中数组
+        的索引从0开始，因此我们用!$even和!$odd来将$even和$odd的布尔值反转。</li>
+    <li ng-repeat="per in peopers" ng-class="{even:!$even,odd:!$odd}">
+        {{per.name}} live in {{per.city}}
+    </li>
+</ul>
+<hr />
+<h2 class="most"> { { } }</h2>
+<pre>
+    {{ }}语法是AngularJS内置的模板语法，它会在内部$scope和视图之间创建绑定。基于这个
+绑定，只要$scope发生变化，视图就会随之自动更新。
+事实上它也是指令，虽然看起来并不像，实际上它是ng-bind的简略形式，用这种形式不需
+要创建新的元素，因此它常被用在行内文本中。
+注意，在屏幕可视的区域内使用{{ }}会导致页面加载时未渲染的元素发生闪烁，用ng-bind
+可以避免这个问题。
+</pre>
+<div ng-init="greeting='HelloWorld!'">
+    {{greeting}}
+</div>
+
+<hr />
+<h2 class="most">ng-bind</h2>
+<pre>HTML加载含有{{ }}语法的元素后并不会立刻渲染它们，导致未渲染内容闪烁（Flash of
+Unrendered Content， FOUC）。我可以用ng-bind将内容同元素绑定在一起避免FOUC。内容会被
+当作子文本节点渲染到含有ng-bind指令的元素内。
+</pre>
+<div ng-init="greeting2='HelloWorld2!'">
+    <p ng-bind="greeting2"></p>
+</div>
+    <h2 class="most">ng-cloak</h2>
+    <pre>除使用ng-bind来避免未渲染元素闪烁，还可以在含有{{ }}的元素上使用ng-cloak指令
+        除使用ng-bind来避免未渲染元素闪烁，还可以在含有{{ }}的元素上使用ng-cloak指令
+    </pre>
+    <div ng-init="greeting3='HelloWorld3!'">
+        <p ng-cloak>{{greeting3}}</p>
+    </div>
+<hr />
+<h2 class="most">ng-bind-template</h2>
+<pre>
+    同ng-bind指令类似， ng-bind-template用来在视图中绑定多个表达式。
+    ng-bind-template="{{message}}{{name}}"
+
+</pre>
+<hr />
+<h2 class="most">ng-model</h2>
+<pre>
+    ng-model指令用来将input、 select、 text area或自定义表单控件同包含它们的作用域中
+的属性进行绑定。它可以提供并处理表单验证功能，在元素上设置相关的CSS类（ng-valid、
+ng-invalid等），并负责在父表单中注册控件。
+    它将当前作用域中运算表达式的值同给定的元素进行绑定。如果属性并不存在，它会隐式创
+建并将其添加到当前作用域中。
+    我们应该始终用ngModel来绑定$scope上一个数据模型内的属性，而不是$scope上的属性，
+这可以避免在作用域或后代作用域中发生属性覆盖。
+</pre>
+<input type="text" ng-model="modelName.someProperty"/>
+
+<hr />
+<h2 class="most"> ng-show/ng-hide</h2>
+<pre>
+    ng-show和ng-hide根据所给表达式的值来显示或隐藏HTML元素。当赋值给ng-show指令的
+值为false时元素会被隐藏。类似地，当赋值给ng-hide指令的值为true时元素也会被隐藏。
+    元素的显示或隐藏是通过移除或添加ng-hide这个CSS类来实现的。 .ng-hide类被预先定义
+在了AngularJS的CSS文件中，并且它的display属性的值为none（用了!important标记）。
+</pre>
+<div ng-show="2+2==4">
+    2+2 is 4,do show
+</div>
+<div ng-show="2+2==5">
+    2+2 is not 5,don't show
+</div>
+<div ng-hide="2+2==4">
+    2+2 is 4,don't show
+</div>
+<div ng-hide="2+2==5">
+    2+2 isn't 5,do show
+</div>
+
+<hr />
+<h2 class="most"> ng-change</h2>
+<pre>这个指令会在表单输入发生变化时计算给定表达式的值。因为要处理表单输入，这个指令要
+和ngModel联合起来使用</pre>
+<div ng-controller="EquationController">
+    <input type="text" ng-model="equation.x" ng-change="change()"/>
+    <code>{{ equation.output }}</code>
+</div>
+
+<hr />
+<h2 class="most"> ng-show/ng-hide</h2>
+<pre>
+         ng-form用来在一个表单内部嵌套另一个表单。普通的HTML form标签不允许嵌套，但
+    ng-form可以。
+            这意味着内部所有的子表单都合法时，外部的表单才会合法。这对于用ng-repeat动态创建
+    表单是非常有用的。
+         由于不能通过字符插值来给输入元素动态地生成name属性，所以需要将ng-form指令内每组
+    重复的输入字段都包含在一个外部表单元素内。
+    下面的CSS类会根据表单的验证状态自动设置：
+ 表单合法时设置ng-valid；
+ 表单不合法时设置ng-invlid；
+ 表单未进行修改时设置ng-pristion；
+ 表单进行过修改时设置ng-dirty。
+    Angular不会将表单提交到服务器，除非它指定了action属性。要指定提交表单时调用哪个
+    JavaScript方法，使用下面两个指令中的一个。
+ ng-submit：在表单元素上使用。
+ ng-click：在第一个按钮或submit类型（input[type=submit]）的输入字段上使用。
+
+    由于不能动态生成name属性，而我们又需要这个属性做验证，所以
+在循环的过程中会为每一个字段都生成一个新表单。
+由于AngularJS中用来取代form的ng-form指令可以嵌套，并且外部表单在所有子表单都合
+    法之前一直处于不合法状态，因此我们可以在动态生成子表单的同时使用表单验证功能。是的，
+    鱼和熊掌可以兼得。
+</pre>
+<form name="signup_form"
+      ng-controller="FormController"
+      ng-submit="submitForm()"
+      novalidate>
+            <div ng-repeat="field in fields"
+                 ng-form="signup_form_input">
+                            <input type="text"
+                                   name="dynamic_input"
+                                   ng-required="field.isRequired"
+                                   ng-model="field.name"
+                                   placeholder="{{field.placeholder}}" />
+
+                            <div ng-show="signup_form_input.dynamic_input.$dirty && signup_form_input.dynamic_input.$invalid">
+                                <span class="error" ng-show="signup_form_input.dynamic_input.$error.required">
+                                    The field is required.
+                                </span>
+                            </div>
+            </div>
+    <button type="submit" ng-disabled="signup_form.$invalid">Submit All</button>
+</form>
+
+<style>
+    input.ng-invalid {
+        border: 1px solid red;
+    }
+
+    input.ng-valid {
+        border: 1px solid green;
+    }
+</style>
+
+
+<hr />
+<h2 class="most"> ng-click</h2>
+<pre>ng-click用来指定一个元素被点击时调用的方法或表达式</pre>
+<div ng-controller="CountController">
+    <button ng-init="count=0" ng-click="count = count +1">+</button>
+            count:{{count}}
+    <button  ng-click="decrement()">-</button>
+</div>
+
+
+
+<hr />
+<h2 class="most"> ng-select</h2>
+<pre>
+    ng-select用来将数据同HTML的select元素进行绑定。这个指令可以和ng-model以及
+    ng-options指令一同使用，构建精细且表现优良的动态表单。
+    ng-options的值可以是一个内涵表达式（comprehension expression），其实这只是一种有趣
+    的说法，简单来说就是它可以接受一个数组或对象，并对它们进行循环，将内部的内容提供给
+    select标签内部的选项。它可以是下面两种形式。
+     数组作为数据源：
+     用数组中的值做标签；
+     用数组中的值作为选中的标签；
+     用数组中的值做标签组；
+     用数组中的值作为选中的标签组。
+     对象作为数据源：
+     用对象的键值（key-value）做标签；
+     用对象的键值作为选中的标签；
+     用对象的键值作为标签组；
+     用对象的键值作为选中的标签组。
+
+</pre>
+<div ng-controller="CityController">
+    <select  ng-model="city"
+             ng-options="city.name for city in cities">
+        <option value="">Choose City</option>
+    </select>
+    Best City: {{ city.name }}
+</div>
+<hr />
+<h2 class="most"> ng-submit</h2>
+<pre>ng-submit用来将表达式同onsubmit事件进行绑定。这个指令同时会阻止默认行为（发送请
+求并重新加载页面）， 除非表单不含有action属性。</pre>
+<form ng-submit="submit()"
+      ng-controller="FormController2">
+    Enter text and hit enter:
+    <input type="text"
+           ng-model="person.name"
+           name="person.name" />
+    <input type="submit"
+           name="person.name"
+           value="Submit" />
+    <code>people={{people}}</code>
+    <ul ng-repeat="(index, object) in people">
+        <li>{{ object.name }}</li>
+    </ul>
+</form>
+<hr />
+<h2 class="most"> ng-class</h2>
+<pre>使用ng-class 动态设置元素的类，方法是绑定一个代表所有需要添加的类的表达式。重复
+的类不会添加。当表达式发生变化，先前添加的类会被移除，新类会被添加</pre>
+<h3>用ng-class在一个随机数大于5时将.red类添加到一个div上</h3>
+<div ng-controller="LotteryController">
+    <div ng-class="{red: x > 5}"
+         ng-if="x > 5">
+        You won!
+    </div>
+    <button ng-click="x = generateNumber()"
+            ng-init="x = 0">
+        Draw Number
+    </button>
+    <p>Number is: {{ x }}</p>
+    <style>
+        .red {
+            background-color: red;
+        }
+    </style>
+</div>
+<hr />
+<h2 class="most"> ng-attr-(suffix)</h2>
+<pre>
+21. ng-attr-(suffix)
+当AngularJS编译DOM时会查找花括号{ { some expression } }内的表达式。这些表达式会
+被自动注册到$watch服务中并更新到$digest循环中，成为它的一部分：
+<-- updated when`someExpression` on the$scope
+is updated -->
+<h1>Hello{{someExpression}}</h1>
+有时浏览器会对属性会进行很苛刻的限制。 SVG就是一个例子：
+&lt;svg&gt;
+    &lt;circle cx="{{ cx }}"&gt;&lt;/circle&gt;
+&lt;/svg&gt;
+运行上面的代码会抛出一个错误，指出我们有一个非法属性。可以用ng-attr-cx来解决这
+个问题。注意， cx位于这个名称的尾部。在这个属性中，通过用{{ }}来写表达式，达到前面提
+到的目的。
+&lt;svg&gt;
+    &lt;circle ng-attr-cx="{{ cx }}"&gt;
+        &lt;circle&gt;
+&lt;/svg&gt;
+</pre>
+</body>
+</html>
