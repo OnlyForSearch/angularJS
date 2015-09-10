@@ -1,0 +1,168 @@
+<!doctype html>
+<html ng-app="myApp">
+<head>
+    <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/4.3.2/css/foundation.min.css">
+    <script src="../components/angular.js"></script>
+    <script>
+        angular.module('myApp', [])
+                .directive('ensureUnique', ['$http', function ($http) {
+                    return {
+                        require: 'ngModel',
+                        link: function (scope, ele, attrs, c) {
+                            scope.$watch(attrs.ngModel, function () {
+                                $http({
+                                    method: 'POST',
+                                    url: '/api/check/' + attrs.ensureUnique,
+                                    data: {'field': attrs.ensureUnique}
+                                }).success(function (data, status, headers, cfg) {
+                                    c.$setValidity('unique', data.isUnique);
+                                }).error(function (data, status, headers, cfg) {
+                                    c.$setValidity('unique', false);
+                                });
+                            });
+                        }
+                    };
+                }])
+                    /*仅当signup_form.submitted设置为true时，容纳错误信息的div才会展示出来。*/
+                .controller('signupController', ['$scope', function ($scope) {
+                    $scope.submitted = false;
+                    $scope.signupForm = function () {
+                        if ($scope.signup_form.$valid) {
+                            // Submit as normal正常提交
+                        } else {
+                            $scope.signup_form.submitted = true;
+                        }
+                    }
+                }]);
+    </script>
+    <style>
+        body {
+            background-color: #fff;
+            border-top: 5px solid #3399cc;
+        }
+
+        html {
+            background: #fff;
+        }
+
+        .row {
+            border: 0px solid green;
+        }
+
+        input.ng-invalid {
+            border: 1px solid red;
+        }
+
+        input.ng-valid {
+            border: 1px solid green;
+        }
+    </style>
+</head>
+<body>
+
+<!--<h1>在提交后显示验证信息</h1>-->
+<!--当用户试图提交表单时，你可以在作用域中捕获到一个submitted值，然后对表单内容进行
+验证并显示错误信息。-->
+<form name="signup_form"
+        novalidate
+      ng-submit="signupForm()"
+      ng-controller="signupController">
+    <fieldset>
+        <legend>Signup</legend>
+
+        <div class="row">
+            <div class="large-12 columns">
+                <label>Your name</label>
+                <input type="text"
+                       placeholder="Name"
+                       name="name"
+                       ng-model="signup.name"
+                       ng-minlength=3
+                       ng-maxlength=20 required />
+                    <!--在ng-show指令中加入 对表单是否进行了提交的检查signup_form.submitted"-->
+                <div class="error"
+                     ng-show="signup_form.name.$dirty && signup_form.name.$invalid && signup_form.submitted">
+                    <small class="error"
+                           ng-show="signup_form.name.$error.required">
+                        Your name is required.
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.name.$error.minlength">
+                        Your name is required to be at least 3 characters
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.name.$error.maxlength">
+                        Your name cannot be longer than 20 characters
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="large-12 columns">
+                <label>Your email</label>
+                <input type="email"
+                       placeholder="Email"
+                       name="email"
+                       ng-model="signup.email"
+                       ng-minlength=3 ng-maxlength=20 required />
+
+                <div class="error"
+                     ng-show="signup_form.name.$dirty && signup_form.name.$invalid && signup_form.submitted">
+                    <small class="error"
+                           ng-show="signup_form.email.$error.required">
+                        Your email is required.
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.email.$error.minlength">
+                        Your email is required to be at least 3 characters
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.email.$error.email">
+                        That is not a valid email. Please input a valid email.
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.email.$error.maxlength">
+                        Your email cannot be longer than 20 characters
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="large-12 columns">
+            <label>Username</label>
+            <input type="text"
+                   placeholder="Desired username"
+                   name="username"
+                   ng-model="signup.username"
+                   ng-minlength=3
+                   ng-maxlength=20
+                   ensure-unique="username" required />
+
+            <div class="error"
+                 ng-show="signup_form.name.$dirty && signup_form.name.$invalid && signup_form.submitted">
+                <small class="error"
+                       ng-show="signup_form.username.$error.required">
+                    Please input a username
+                </small>
+                <small class="error"
+                       ng-show="signup_form.username.$error.minlength">
+                    Your username is required to be at least 3 characters
+                </small>
+                <small class="error"
+                       ng-show="signup_form.username.$error.maxlength">
+                    Your username cannot be longer than 20 characters
+                </small>
+                <small class="error"
+                       ng-show="signup_form.username.$error.unique">
+                    That username is taken, please try another
+                </small>
+            </div>
+        </div>
+
+        <button type="submit" class="button radius">Submit</button>
+    </fieldset>
+</form>
+
+</body>
+</html>
