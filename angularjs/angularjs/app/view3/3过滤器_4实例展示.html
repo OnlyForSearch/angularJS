@@ -1,0 +1,159 @@
+<!doctype html>
+<html ng-app="myApp">
+<head>
+    <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/4.3.2/css/foundation.min.css">
+    <script src="../components/angular.js"></script>
+    <script>
+        angular.module('myApp', [])
+                .directive('ensureUnique', ['$http', function ($http) {
+                    return {
+                        require: 'ngModel',
+                        link: function (scope, ele, attrs, c) {
+                            scope.$watch(attrs.ngModel, function () {
+                                /*当表单内容通过验证后，会向/api/check/username发送一个POST请求来验证用户名是否可用。*/
+                                $http({
+                                    method: 'POST',
+                                    url: '/api/check/' + attrs.ensureUnique,
+                                    data: {'field': attrs.ensureUnique}
+                                }).success(function (data, status, headers, cfg) {
+                                    c.$setValidity('unique', data.isUnique);
+                                }).error(function (data, status, headers, cfg) {
+                                    c.$setValidity('unique', false);
+                                });
+                            });
+                        }
+                    };
+                }]);
+
+    </script>
+    <style>
+
+        body {
+            background-color: #fff;
+            border-top: 5px solid #3399cc;
+        }
+
+        html {
+            background: #fff;
+        }
+
+        .row {
+            border: 0px solid green;
+        }
+
+        input.ng-invalid {
+            border: 1px solid red;
+        }
+
+        input.ng-valid {
+            border: 1px solid green;
+        }
+    </style>
+
+</head>
+<body>
+<h1></h1>
+<!--尽管实时验证非常有用，但是当用户还没有完成输入时就弹出一个错误提示，这种体验是非
+    常糟糕的。应该在用户提交表单或完成当前字段中的输入后，再提示验证信息，这样才是用户友
+    好的。-->
+<!--Foundation①作为CSS布局的框架-->
+<!--signup_form，当表单提交时我们要调用signupForm()。-->
+<form name="signup_form" novalidate ng-submit="signupForm()">
+    <fieldset>
+        <legend>Signup</legend>
+
+        <div class="row">
+            <!--验证要求name字段的最小长度是3个字符，最大长度是20个字符（当长度大于等于21时输入会变为不合法）。最后，我们要求name字段是必填项-->
+                <!--不要忘记给输入字段添加name属性。给输入字段添加name属性非常重要：这决定了我们将验证信息展示给用户时如何引用表单输入字段。-->
+            <div class="large-12 columns">
+                <label>Your name</label>
+                <input type="text"
+                       placeholder="Name"
+                       name="name"
+                       ng-model="signup.name"
+                       ng-minlength=3
+                       ng-maxlength=20 required />
+
+            <!--用$dirty属性来确 保用户未对输入内容进行修改时错误内容不会显示出来：-->
+                <div class="error"
+                     ng-show="signup_form.name.$dirty && signup_form.name.$invalid">
+                    <small class="error"
+                           ng-show="signup_form.name.$error.required">
+                        Your name is required.
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.name.$error.minlength">
+                        Your name is required to be at least 3 characters
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.name.$error.maxlength">
+                        Your name cannot be longer than 20 characters
+                    </small>
+                </div>
+            </div>
+        </div>
+
+            <!--现在，我们会在特定的属性未通过验证时只展示对应的特定DOM元素-->
+            <!--现在整个表单都被包含进来了，我们来看一下电子邮件的输入字段。注意，我们将输入字段
+                的type属性设置为email，并且在$error.email上添加了验证错误的信息。这个验证同时基于
+                AngularJS和HTML5属性实现。-->
+
+        <div class="row">
+            <div class="large-12 columns">
+                <label>Your email</label>
+                <input type="email"
+                       placeholder="Email"
+                       name="email"
+                       ng-model="signup.email"
+                       ng-minlength=3 ng-maxlength=20 required />
+
+                <div class="error"
+                     ng-show="signup_form.email.$dirty && signup_form.email.$invalid">
+                    <small class="error"
+                           ng-show="signup_form.email.$error.required">
+                        Your email is required.
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.email.$error.minlength">
+                        Your email is required to be at least 3 characters
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.email.$error.email">
+                        That is not a valid email. Please input a valid email.
+                    </small>
+                    <small class="error"
+                           ng-show="signup_form.email.$error.maxlength">
+                        Your email cannot be longer than 20 characters
+                    </small>
+                </div>
+            </div>
+        </div>
+
+
+        <!--signup_form，当表单提交时我们要调用signupForm()。-->
+        <div class="large-12 columns">
+            <label>Username</label>
+            <input type="text"
+                   placeholder="Desired username"
+                   name="username"
+                   ng-model="signup.username"
+                   ng-minlength=3
+                   ng-maxlength=20
+                   ensure-unique="username" required />
+            <!--在最后一个输入字段中除了同前面相同的验证外，还添加了一个自定义验证。这个自定义验
+证是用AngularJS指令定义的：-->
+            <div class="error" ng-show="signup_form.username.$dirty && signup_form.username.$invalid">
+                <small class="error" ng-show="signup_form.username.$error.required">Please input a username</small>
+                <small class="error" ng-show="signup_form.username.$error.minlength">Your username is required to be at least 3 characters</small>
+                <small class="error" ng-show="signup_form.username.$error.maxlength">Your username cannot be longer than 20 characters</small>
+                <small class="error" ng-show="signup_form.username.$error.unique">That username is taken, please try another</small>
+            </div>
+        </div>
+           <!--最后，把按钮放进去。可以用ng-disabled指令基于表单的合法性来启用或禁用按钮：-->
+        <button type="submit" ng-disabled="signup_form.$invalid" class="button radius">Submit</button>
+    </fieldset>
+</form>
+
+
+</body>
+</html>
