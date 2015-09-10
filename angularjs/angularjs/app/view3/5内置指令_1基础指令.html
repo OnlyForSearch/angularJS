@@ -57,7 +57,12 @@
                 .run(function ($rootScope, $timeout) {
                     $rootScope.isDisabled = true;
                     $timeout(function () {
+                        //ng-disabled示例
                         $rootScope.isDisabled = false;
+                        // ng-href示例
+                        $rootScope.myHref = 'http://www.baidu.com';
+                        // ng-src示例
+                        $rootScope.imgSrc = 'https://www.google.com/images/srpr/logo11w.png';
                     }, 5000);
                 });
     </script>
@@ -95,23 +100,35 @@
     <h1 class="Imp">类布尔属性</h1>
     <h2 class='most'>ng-href和ng-src都能有效帮助重构和避免错误，因此在改进代码时强烈建议用它们代替原 来的href和src属性。</h2>
     <div>
-        1. ng-href
+       <h2 class="most"> 1. ng-href</h2>
         当使用当前作用域中的属性动态创建URL时，应该用ng-href代替href。
         这里的潜在问题是当用户点击一个由插值动态生成的链接时，如果插值尚未生效，将会跳转
         到错误的页面（通常是404）。
         这时，如果使用ng-href， AngularJS会等到插值生效（在例子中是两秒以后）后再执行点击
         链接的行为：
         <!-- 当 href 包含一个 {{expression}}时总是使用 ng-href -->
-        <a ng-href="{{myHref}}">I'm feeling luck,when I load</a>
-        <script>
+        <br />
+        链接延迟出现<a ng-href="{{myHref}}">I'm feeling luck,when I load</a>
+       <!-- <script>
             angular.module('myApp', [])
                     .run(function ($rootScope, $timeout) {
                         $timeout(function () {
-                            $rootScope.myHref = 'http://google.com';
-                        }, 2000);
+                            $rootScope.myHref = 'http://www.baidu.com';
+                        }, 5000);
                     });
-        </script>
+        </script>-->
     </div>
+        <h2 class="most">
+            会告诉浏览器在ng-src对应的表达式生效之前不要加载图像：
+        </h2>
+
+    <h1>WrongWay</h1>
+  <h4>  通过Chrome开发者工具的网络面板观察资源加载状况，注意，其中一个
+    请求是红色的，说明发生了错误。这个错误是由于Wrong Way中我们用src代替了ng-src导致的。</h4>
+    <img src="{{imgSrc}}" />
+
+    <h1>Rightway</h1>
+    <img ng-src="{{imgSrc}}" />
 
 </body>
 </html>
