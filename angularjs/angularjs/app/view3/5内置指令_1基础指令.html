@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <style>
+        .Imp {
+            color: lawngreen;
+        }
+        .most{
+            color: lightcoral;
+          }
+    </style>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <h1 class='Imp'>基础ng-属性指令</h1>
+       <h3>和原生HTML标签名称相似的一组内置指令:在原生标签前加上了ng前缀</h3>
+    <h3><pre>
+         ng-href；
+         ng-src；
+         ng-disabled；
+         ng-checked；
+         ng-readonly；
+         ng-selected；
+         ng-class；
+         ng-style。</pre></h3>
+    <hr />
+    <h1 class='Imp'>布尔属性</h1>
+    <h2 class='most'>根据HTML标准的定义①，布尔属性代表一个true或false值。当这个属性出现时，这个属性的值就是true（无论实际定义的值是什么）。如果未出现，这个属性的值就是false。
+        因此AngularJS提供了一组带有ng-
+        前缀版本的布尔属性，通过运算表达式的值来决定在目标元素上是插入还是移除对应的属性。
+    </h2>
+    <h3>
+<pre>
+   1. ng-disabled
+            使用ng-disabled可以把disabled属性绑定到以下表单输入字段上：
+             input （text、 checkbox、 radio、 number、 url, email、 submit）；
+             textarea；
+             select；
+             button。
+        
+</pre>
+
+    </h3>
+
+    <h1 >Demo 1:</h1>
+    <input type="text" ng-model="someProperty" placeholder="Type to Enable">
+    <button ng-model="button" ng-disabled="!someProperty">A Button</button>
+
+    <h1 >Demo 2:</h1>
+    文字字段被禁5秒:<textarea ng-disabled="isDisabled">Wait5 second</textarea>
+
+    <script>
+        // JS for demo 2:
+        angular.module('myApp', [])
+                .run(function ($rootScope, $timeout) {
+                    $rootScope.isDisabled = true;
+                    $timeout(function () {
+                        //ng-disabled示例
+                        $rootScope.isDisabled = false;
+                        // ng-href示例
+                        $rootScope.myHref = 'http://www.baidu.com';
+                        // ng-src示例
+                        $rootScope.imgSrc = 'https://www.google.com/images/srpr/logo11w.png';
+                    }, 5000);
+                });
+    </script>
+
+    <hr />
+    <h2 class='most'>ng-readonly:通过ng-readonly可以将某个返回真或假的表达式同是否出现readonly属性进行绑定：</h2>
+    Type here to make sibling readonly:
+ 这个有输入的话下面就不能输入  <input type="text" ng-model="someProperty2"><br />
+    <input type="text" ng-readonly="someProperty2" value="Some text here" />
+    <hr />
+    <h2 class='most'>ng-checked将某个表达式同是否出现checked属性进行绑定。</h2>
+    <label >someProperties3={{someProperties3}}</label><br />
+    <input type="checkbox"
+           ng-model="someProperties3"
+           ng-init="someProperties3=true"
+           ng-checked="someProperties3" /><br />
+    相反例子
+    <label >anotherProterties3={{anotherProterties3}}</label><br />
+    <input type="checkbox"
+            ng-model="anotherProterties3"
+           ng-init="anotherProterties3=false"
+           ng-checked="anotherProterties3"
+            />
+    <br />
+    <hr />
+    <h2 class='most'>ng-selected可以对是否出现option标签的selected属性进行绑定</h2>
+    <label>Select Two Fish:</label>
+    <input type="checkbox"
+           ng-model="isTwoFish"><br />
+    select值绑定input<select>
+        <option>One Fish</option>
+        <option ng-selected="isTwoFish">Two Fish</option>
+    </select>
+    <hr />
+    <h1 class="Imp">类布尔属性</h1>
+    <h2 class='most'>ng-href和ng-src都能有效帮助重构和避免错误，因此在改进代码时强烈建议用它们代替原 来的href和src属性。</h2>
+    <div>
+       <h2 class="most"> 1. ng-href</h2>
+        当使用当前作用域中的属性动态创建URL时，应该用ng-href代替href。
+        这里的潜在问题是当用户点击一个由插值动态生成的链接时，如果插值尚未生效，将会跳转
+        到错误的页面（通常是404）。
+        这时，如果使用ng-href， AngularJS会等到插值生效（在例子中是两秒以后）后再执行点击
+        链接的行为：
+        <!-- 当 href 包含一个 {{expression}}时总是使用 ng-href -->
+        <br />
+        链接延迟出现<a ng-href="{{myHref}}">I'm feeling luck,when I load</a>
+       <!-- <script>
+            angular.module('myApp', [])
+                    .run(function ($rootScope, $timeout) {
+                        $timeout(function () {
+                            $rootScope.myHref = 'http://www.baidu.com';
+                        }, 5000);
+                    });
+        </script>-->
+    </div>
+        <h2 class="most">
+            会告诉浏览器在ng-src对应的表达式生效之前不要加载图像：
+        </h2>
+
+    <h1>WrongWay</h1>
+  <h4>  通过Chrome开发者工具的网络面板观察资源加载状况，注意，其中一个
+    请求是红色的，说明发生了错误。这个错误是由于Wrong Way中我们用src代替了ng-src导致的。</h4>
+    <img src="{{imgSrc}}" />
+
+    <h1>Rightway</h1>
+    <img ng-src="{{imgSrc}}" />
+
+</body>
+</html>
