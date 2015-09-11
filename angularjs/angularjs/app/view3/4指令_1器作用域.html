@@ -20,7 +20,8 @@
 
 <div id="parentCtrl" ng-controller="ParentCtrl" >
     <p >We can access: {{ rootProperty }} and {{ parentProperty }}</p >
-
+<!--注意，还有其他内置指令（比如ng-include和ng-view）也会创建新的子作用域，这意味着
+它们在被调用时行为和ng-controller类似。我们在构造自定义指令时也可以创建新的子作用域。-->
     <div id="childCtrl" ng-controller="ChildCtrl" >
         <p >
             We can access:
