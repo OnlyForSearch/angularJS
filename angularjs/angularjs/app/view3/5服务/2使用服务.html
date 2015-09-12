@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <script src="../../components/angular/angular.min.js"></script>
+    <meta charset="UTF-8">
+    <title></title>
+    <script>
+        angular.module('myApp.services', [])
+                .factory('githubService', function ($http) {
+                    var githubUrl = 'https://api.github.com',
+                            githubUsername;
+                    var runUserRequest = function (path) {
+                        // 从使用JSONP调用Github API的$http服务中返回promise,可以通过.success()方法像直接调用$http一样调用返回的对象。
+                        //可以通过.success()方法像直接调用$http一样
+                        //.和上面的例子一样，并不推荐在控制器中使用$watch，这里只是为了方便演示。在实际生产中会将这个功能封装进一个指令，并在指令中设置$watch。
+
+                        return $http({
+                            method: 'JSONP',
+                            url: githubUrl + '/users/' +
+                            githubUsername + '/' +
+                            path + '?callback=JSON_CALLBACK'
+                        });
+                    };
+                    // 返回带有两个方法的服务对象
+                    // 事件
+                    // 和setUsername
+                    return {
+                        events: function () {
+                            return runUserRequest('events');
+                        },
+                        //服务中有一个setUsername方法，用来保存当前的GitHub用户名了。
+                        setUsername: function (username) {
+                            githubUsername = username;
+                        }
+                    };
+                });
+
+        //使用服务
+        //服务的名字当作参数传递给控制器函数，可以将服务注入到控制器中。当服务成为了某个
+        //控制器的依赖 ， 就可以在控制器中调用任何定义在这个服务对象上的方法 。
+
+        angular.module('myApp', ['myApp.services'])
+            //(1)修改
+            /* .controller('ServiceController', function ($scope, githubService) {
+             $scope.event=githubService.events('auser');
+             });*/
+
+                //(2)修改第二次
+                /*.controller('ServiceController',
+                function ($scope, githubService) {
+                    // 注意username属性的变化
+                    // 如果有变化就运行该函数
+                    //并不推荐在控制器中使用$watch，这里只是为了方便演示。在
+                    //实际生产中会将这个功能封装进一个指令，并在指令中设置$watch。
+                    $scope.$watch('username', function (newUsername) {
+                        // 从使用JSONP调用Github API的$http服务中返回promise
+                        githubService.events(newUsername)
+                                .success(function (data, status, headers) {// success函数在数据中封装响应
+                                    // 因此我们需要调用data.data来获取原始数据
+                                    $scope.events = data.data;
+                                })
+                    });
+                });*/
+
+                    //*(3)第三次修改
+                //你可能会注意到在输入字段发生变化前，有一个延时。如果不延时，将导致
+                // 输入字段中的任何一个键盘输入都会让终端对GitHub API进行调用，这显然不是我们希望的。
+                // 通过内置服务$timeout来介绍一下这个延时。同注入githubService一样，需要将$timeout
+                // 服务注入到控制器中：
+                // app.controller('ServiceController', function($scope, $timeout, githubService) {
+                // });
+                //在自定义服务之前注入所有的AngularJS内置服务，这是约定俗成的规则。
+
+            //现在可以在控制器中使用$timeout服务了,现在可以在控制器中使用$timeout服务了
+            //如果用户两次输入之间有350 ms的间隔，就推断用户已经完成了输入，然后开始向GitHub发送请求
+            .controller('ServiceController', function ($scope, $timeout, githubService) {
+
+             //githubService可以注入到应用的任何一个控制器中，并可以在控制器中调用events()方法，且无须担心当前作用域对象上的用户名是否是正确的。
+                $scope.setUsername = githubService.setUsername;
+
+                    // 和上面的示例一样, 添加了$timeout服务
+                var timeout;
+                $scope.$watch('username', function (newUserName) {
+                    if (newUserName) {
+                    // 如果在进度中有一个超时(timeout)
+                        if (timeout) $timeout.cancel(timeout);
+
+                        timeout = $timeout(function () {
+                            githubService.events(newUserName)
+                                    .success(function (data, status) {
+                                        $scope.events = data.data;
+                                    });
+                        }, 350);
+                    }
+                });
+            });
+
+    </script>
+</head>
+<body>
+<div ng-controller="ServiceController">
+    <label for="username">
+        Type in a GitHub username
+    </label>
+    <input id="username" type="text"
+           ng-model="username"
+           placeholder="Enter a GitHub username" />
+    <ul>
+        {{events}}
+        <li ng-repeat="event in events">
+            <!--
+            event.actor and event.repo are returned
+            by the github API. To view the raw
+            API, uncomment the next line:
+            -->
+            <!-- {{ event | json }} -->
+            {{ event.actor.login }} {{ event.repo.name }}
+        </li>
+    </ul>
+</div>
+</body>
+</html>

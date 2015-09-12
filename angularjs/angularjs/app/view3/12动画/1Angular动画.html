@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+<hr />
+<pre>
+    <h2>
+        Angular团队创建了ngAnimate模块，让我们的Angular应用能够提供CSS和JavaScript动画。
+        在Angular应用中创建动画，有几种途径：
+         使用CSS3动画；
+         使用JavaScript动画；
+         使用CSS3过渡。
+        本章旨在讨论这三种动画方法，并且对如何能做出自己的动画有一个深刻的理解。
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.1 安装
+                自1.2.0起，动画就不再是Angular核心的一部分了，它们存在于自己的模块中。 为了在Angular
+        应用中包含动画，需要在应用中安装并且引用这个模块。
+             可以从code.angularjs.org①上下载它，并将它保存到一个能从HTML引用到的位置，比如
+        js/vendor/angular-animate.js。
+        也可以使用Bower来安装它，这会把它放在Bower目录中。想要知道更多有关Bower的信息，
+        请参阅34.6节。
+            $ bower install --save angular-animate
+            引用了Angular自身之后，需要在HTML中引用这个动画库。
+            &lt;script src="js/vendor/angular.js">&lt;/script>
+            &lt;script src="js/vendor/angular-animate.js">&lt;/script>
+            最后，需要在我们的应用模块中把ngAnimate模块当作依赖项来引用：
+            angular.module('myApp', ['ngAnimate']);
+        至此，就已经准备好使用AngularJS来呈现动画了。
+
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+
+        22.2 它是如何运作的
+        $animate服务默认给动画元素的每个动画事件（参见后面的列表）添加了两个CSS类。
+        ——————————
+        ① http://code.angularjs.org
+             $animate服务支持多个Angular内置的指令，它们无需额外的配置即可支持动画。它很灵活，
+        我们可以为自己的指令创建动画。
+              所有这些预先存在的支持动画的指令，都是通过监控指令上的事件实现的。例如，当一个新
+        的ngView进入并且把新内容带进浏览器时，这个事件就叫做ngView的enter事件。当ngHide准备
+        显示一个元素的时候， remove事件就会触发。
+             下面是指令以及在不同状态触发的事件列表。我们会使用这些事件来定义在每个状态上，动
+        画会如何工作。
+        指 令                 事 件
+        ngRepeat            enter、 leave、 move
+        ngView              enter、 leave
+        ngInclude           enter、 leave
+        ngSwitch                enter、 leave
+        ngIf enter、                 leave
+        ngClass或者class="…"     add、 remove
+        ngShow                     add、 remove (.ng-class)
+        ngHide                  add、  remove
+             $animate服务基于指令发出的事件来添加特定的样式类。对于结构性的动画（比如进入、移
+           动和离开），添加上去的CSS类是ng-[EVENT]和ng-[EVENT]-active这样的形式。
+                对于基于样式类的动画（比如ngClass），动画样式类的形式是[CLASS]-add、 [CLASS]-addactdive、 [CLASS]-remove、 [CLASS]-remove-active。
+             最后，对于ngShow和ngHide，只有.ng-hide类会被添加和移除，它的形式跟ngClass一
+        样： .ng-hide-add、 .ng-hide-add-active、 .ng-hide-remove、 .ng-hide-remove-active。
+
+
+        自动添加类
+             触发enter事件的指令会在DOM变更时收到一个.ng-enter样式类，然后， Angular添加
+        ng-enter-active类，它会触发动画。 ngAnimate自动检测CSS代码来判定动画什么时候完成。
+             这个事件完成时， Angular会从DOM元素上移除这两个类，使我们能够在DOM元素上定义动
+        画相关的属性。
+             如果浏览器不支持CSS过渡或者动画，动画会开始，然后立即结束， DOM会处于最终的状态，
+        不会添加过渡或者动画的样式类。
+                所有支持的结构性动画事件都遵循同样的约定：进入、离开、移动。基于样式的动画事件略
+        有不同（如上所述）。
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.3 使用 CSS3 过渡
+             迄今为止，我们在应用中包含动画的最简单的方式是使用CSS3过渡，除了IE9和更早版本外，
+        它都能运行。
+            不支持CSS3过渡的浏览器会优雅地降级到应用的无动画版本。
+            要做任何CSS动画，我们都要确认给动画中关注的DOM元素添加了样式。
+            例如，在下面的示例中，我们看看如何让这个元素动起来：
+            &lt;div class="fade-in">&lt;/div>
+            CSS3过渡是完全基于样式类的，意思是说，只要我们在HTML上定义了动画的样式，这个动
+            画就会在浏览器中动起来。
+               为了用样式类实现动画，需要遵循Angular的命名约定来定义CSS过渡。
+                 CSS过渡是让元素从一种样式渐变为另一种样式的特效。要定义一个动画，我们需要指定想
+        要添加动画的属性，以及特效的持续时间。
+             例如，这段代码使用.fade-in类在DOM元素的所有属性上添加了一个持续两秒的过渡特效。
+              .fade-in {
+            transition: 2s linear all;
+            -webkit-transition: 2s linear all;
+            }
+        设置了这个过渡和时间之后，就可以在DOM元素的不同状态上定义属性了。
+                .fade-in:hover {
+                width: 300px;
+                height: 300px;
+                }
+             使用ngAnimate， Angular通过给每个动画事件添加两个样式类的方式开始了我们的指令动
+        画：初始的ng-[EVENT]类，不久之后是ng-[EVENT]-active类。
+         为了自动让上面的DOM元素使用过渡实现Angular动画，我们修改上面初始的.fade-in示例
+        来包含初始状态类：
+            .fade-in.ng-enter {
+            opacity: 0;
+            }
+            .fade-in.ng-enter.ng-enter-active {
+            opacity: 1;
+            }
+             要真正运行这个动画，需要包含CSS动画定义。在这个定义中，我们需要同时
+         包含持续时间和将要修改的元素属性。
+             .fade-in.ng-enter { transition: 2s linear all; -webkit-transition: 2s linear all; }
+        也可以把transition属性放到基准CSS类中（“.fade-in”，而不是在每个要产生动画的地方
+        都指定）。
+                .fade-in {
+                -webkit-transition: 2s linear all;
+                transition: 2s linear all;
+                }
+                .fade-in.ng-enter {
+                opacity: 0;
+                }
+                .fade-in.ng-enter.ng-enter-active {
+                opacity: 1;
+                }
+                .fade-in.ng-leave {
+                opacity: 1;
+                }
+                .fade-in.ng-leave.ng-leave-active {
+                opacity: 0;
+                }
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.4 使用 CSS3 动画
+                CSS3动画比CSS3过渡更广泛、更复杂。除IE9和更早版本的IE之外，所有主流浏览器都支持
+        它 们 。 使 用 CSS3 动 画 ， 我 们 会 用 同 样 的 初 始 样 式 类 ng-[EVENT] ， 但 是 不 需 要 在
+        ng-[EVENT]-active状态中定义动画状态，因为CSS规则会处理剩余部分。
+                    我们在@keyframes规则中创建动画。在@keyframes规则中定义的CSS元素内部，我们定义要
+        处理的CSS样式。
+                  想让DOM元素动起来时，我们使用animation:属性来绑定@keyframe CSS属性，它把动画
+        添加到CSS元素上。
+             当在CSS元素上绑定动画时，我们需要同时指定动画的名称和持续时间。
+                 记得添加动画持续时间：如果我们忘记添加动画的持续时间，它默认会设成0，
+        此时动画就不会运行了。
+             要创建@keyframes规则，我们需要给关键帧一个名字，并且设置动画的时间阶段，它包含
+        了动画过程中的属性。
+                @keyframes firstAnimation {
+                        0% {
+                        color: yellow;
+                        }
+                        100% {
+                        color: black;
+                        }
+                }
+                /*对于Chrome和Safari浏览器 */
+                @-webkit-keyframes firstAnimation {
+                /* from等于0% */
+                        from {
+                            color: yellow;
+                            }
+                                 /* from等于100% */
+                            to {
+                            color: black;
+                        }
+                }
+            使用关键字from等同于把百分比设置为0%，使用关键字to等同于把百分比设置
+        成100%。
+                我们并不局限于0%和100%：可以分步提供动画，比如10%、 15%，等等。要把@keyframe属性
+        赋值到想要应用动画的类上，我们使用animation关键字，它把动画应用到CSS选择器选定的元
+        素上。
+                .fade-in:hover {
+                -webkit-animation: 2s firstAnimation;
+                animation: 2s firstAnimation;
+                }
+              用ngAnimate，我们把firstAnimation值绑定到任意用.fade-in类选定的元素上。Angular
+        自动为我们添加和移除.ng-enter类，所以我们可以简单地把事件添加到.fade-in.ng-enter
+        类上：
+        .fade-in.ng-enter {
+        -webkit-animation: 2s firstAnimation;
+        animation: 2s firstAnimation;
+        }
+
+
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.5 交错 CSS 过渡/动画
+                 ngAnimate捆绑了一个额外的特性，用指定的延迟来间隔同时存在的动画。这意味着如果10
+        个项进入了一个ngRepeat列表，每个项可以在上一个之后延迟X毫秒插入。这样产生的特效就是
+        一个交错特效， ngAnimate把CSS过渡和动画处理成这样。
+
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.5.1 交错CSS过渡
+        沿用ng-enter和ng-enter-active这样组织CSS过渡代码的格式，可以添加一个额外的CSS
+        类来提供交错延迟。使用下面的CSS代码，可以用CSS过渡来给我们的.fade-in类添加一个交错
+        特效。
+        .fade-in.ng-enter-stagger {
+        -webkit-transition-delay:200ms;
+        transition-delay:200ms;
+        /* 防止意外CSS继承的保护措施 */
+        -webkit-transition-duration:0;
+        transition-duration:0;
+        }
+        下面的代码会在每个后续项以动画方式进入之后，执行200毫秒的停顿。注意，另有一个CSS
+        属性指定了持续时间，并且设置成零了。为什么？它在此是一个安全防护，防止意外的CSS继承
+        基础CSS类。要是没有这种保障，交错特效可能就会被忽略了。
+        但是这对于我们的.fade-in类意味着什么呢？想象一下我们正在使用一个ngRepeat元素，
+        这个元素使用的就是.fade-in类。
+        &lt;div ng-repeat="item in items" class="fade-in">
+        Item: #1 -- {{ item }}
+        &lt;/div>
+        每次一系列的项插入到列表中之后，交错延迟会逐步启动。 Item #1会被正常插入， #1会在200
+        毫秒之后， #3 400毫秒之后，以此类推。
+
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.5.2 交错CSS动画
+                CSS动画也支持并且遵循与上面提到的CSS过渡交错特效同样的CSS命名约定。唯一的不同
+        是没有使用transition-delay，而是用了animation-delay（原因很明显）。如果用CSS动画来
+        实现交错特效， .fade-in类看上去就会像这样：
+                .fade-in.ng-enter-stagger {
+                        -webkit-animation-delay:200ms;
+                        animation-delay:200ms;
+                        /* css交错动画需要放在这里 */
+                        -webkit-animation-duration:0;
+                        animation-duration:0;
+                }
+        既然CSS关键帧要等到重排（当浏览器重绘屏幕）时才会发生，可能会出现轻微的闪烁，或者
+        元素自身可能短暂地不动，直到交错动画开始生效。这是因为关键帧动画尚未触发，所以from或者
+        0%的动画还没有开始。为解决这个问题，在赋值了关键帧动画的CSS类中，可以放额外的CSS样式。
+                .fade-in.ng-enter {
+                /* 重排之前的样式 */
+                    opacity:0;
+                    -webkit-animation: 2s firstAnimation;
+                    animation: 2s firstAnimation;
+                }
+                .fade-in.ng-enter-stagger { ... }
+                @keyframes firstAnimation { ... }
+                @-webkit-keyframes firstAnimation { ... }``
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.5.3 什么指令支持交错动画
+                 很简单，所有指令都可以，但是仅当同一父容器下的两个或更多相同动画事件同时触发时，
+        才可以使用。所以当10个项被插入一个nRepeat列表时，交互特效就产生。这意味着如果ngClass
+        被放在一个ngRepeat元素上， ngClass的值在列表中对每个项都产生了变化，样式类变化的动画
+        就会渲染出一个交错特效。
+               交错动画也可以在自定义指令中触发。在一行中用$animate服务调几次，一个交互动画就呈
+        现出来了。确保每个动画的父元素是同一个，并且每个参与动画元素的className值也是相同的。
+
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+         22.6 使用 JavaScript 动画
+                JavaScrip动画不同于前两种Angular动画方法，因为我们直接使用JavaScript设置DOM元素的
+        属性。
+                所有的主流浏览器都支持JavaScript动画，所以如果想在不支持CSS渐变和动画的浏览器上提
+        供动画的话，这是个好的选择。
+                这里，我们更新JavaScript来处理动画，而不是操控CSS来让元素动起来。
+             ngAnimate在模块API上添加了.animation方法；这个方法提供了一个接口，我们可以用来
+        创建动画。
+                animiation()方法带有两个参数。
+                 classname（字符串）
+                这个classname会匹配要产生动画的元素的class。到现在为止的例子里，这个动画应当被
+                命名为： .fade-in。
+                 animateFun（函数）
+                animate函数预期会返回一个对象，包含了指令会触发的不同事件函数（当使用的时候）。
+         想知道这些函数的详细文档，请查阅$animate API文档。
+                angular.module('myApp', ['ngAnimate'])
+                        .animation('.fade-in', function() {
+                            return {
+                                enter: function(element, done) {
+                                        // 运行动画
+                                        // 当动画结束的时候调用done
+                                    return function(cancelled) {
+                                        // 关闭或者取消的回调
+                                }
+                            }
+                        }
+                });
+             $animate服务为指定的元素调用这些函数。在这些函数里，我们可以对这个元素做任何事情。
+        唯一要求是在动画结束时，需要调用回调函数done()。
+            在这些函数中，我们可以返回一个end函数，它会在动画结束或者动画被取消时调用。
+        当动画触发时， $animate为事件查找匹配的动画函数。如果找到了匹配事件的函数，它会执
+        行这个函数，否则就会完全跳过这个动画。
+    </h2>
+    </pre>
+<hr />
+<pre>
+    <h2>
+        22.7 微调动画
+          取决于应用的复杂度， ngAnimate和它下面的动画代码可能会需要一些调整。
+         对CSS类作过滤
+                默认情况下， ngAnimate会自动尝试让每个通过$animate服务传递过来的元素都动起来。但
+        是不必担心，只有包含了用CSS或者JavaScript动画注册了的CSS类的元素才会真的动起来。
+             尽管这个系统在运作时，必须检查每个可能的CSS类，这可能会在低速设备上慢一些。因此，
+        在angular.js的1.2.13发布版本中， ngAnimate提供了一个配置项。让$animate提供者可以使用正
+        则表达式对元素进行过滤，以去掉不匹配元素上的动画操作。
+            myModule.config(function($animateProvider) {
+                   // 唯一合法的参数是正则表达式
+                      $animateProvider.classNameFilter(/\banimate-/);
+                     });
+        现在有了给定的正则表达式， /animated/，只有以animate开始的CSS类会被为动画而处理。
+             结果，我们的.fade-in动画不会再运行了，它需要被重命名成.animate-fade-in才能真正运行。
+
+    </h2>
+    </pre>
+
+
+<hr />
+<pre>
+    <h2>
+        22.8 DOM 回调事件
+             当动画在一个元素产生时，我们想要检测DOM操作什么时候发生，可以在$animate服务上
+        注册一个事件。事件如下：
+        element.on('$animate:before', function(evt, animationDetails) {});
+        element.on('$animate:after', function(evt, animationDetails) {});
+
+    </h2>
+    </pre>
+
+
+<hr />
+<pre>
+    <h2>
+        22.9 内置指令的动画
+        22.9.1 ngRepeat动画
+        ngRepeat指令产生这些事件：
+        动 作 事                       件 名
+        一项被插入到列表之后                  enter
+        一项从列表中移除                remove
+        列表中的一项移动了               move
+
+
+        对这三个例子，我们使用下面这个HTML：
+        &lt;div ng-controller="HomeController">
+            &lt;ul>
+                &lt;li class="fade-in" ng-repeat="r in roommates">
+                    {{ r }}
+                &lt;/li>
+            &lt;/ul>
+        &lt;/div>
+        我们的HomeController默认是这样定义的：
+        angular.module('myApp', ['ngAnimate'])
+                 .controller('HomeController', function($scope) {
+                     $scope.roommates = [
+                              'Ari', 'Q', 'Sean', 'Anand'
+                          ];
+                 setTimeout(function() {
+                    $scope.roommates.push('Ginger');
+                    $scope.$apply(); // 触发一次digest
+                    setTimeout(function() {
+                    $scope.roommates.shift();
+                    $scope.$apply(); // 触发digest
+                   }, 2000);
+              }, 1000);
+        });
+        在这些例子中，我们有一个roommates列表，包含了四个元素。在一秒钟之后，加了第五个。
+        两秒之后，移除了第一个元素。
+
+
+        1. CSS3过渡
+        要让ngRepeat列表中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，
+        以及为enter和edit状态定义最终状态的类。
+        首先，在初始类上定义动画属性：
+
+        .fade-in.ng-enter,
+        .fade-in.ng-leave {
+             transition: 2s linear all;
+             -webkit-transition: 2s linear all;
+        }
+        至此，可以简单地在动画中定义初始和最终阶段的CSS属性。这里，我们把元素从绿色的文
+        字淡入，在进入动画的最终阶段把文字变成黑色。在离开（元素移除）动画中，我们把属性反转：
+        .fade-in.ng-enter {
+                opacity: 0;
+                   color: green;
+        }
+        .fade-in.ng-enter.ng-enter-active {
+                 opacity: 1;
+                 color: black;
+        }
+        .fade-in.ng-leave {}
+        .fade-in.ng-leave.ng-leave-active {
+              opacity: 0;
+        }
+        2. CSS3关键帧动画
+        使用关键帧动画时，无需定义开始和结束的样式类，而是仅定义单个选择器，包含动画样式
+        的键。
+        首先为关键帧定义动画属性：
+        @keyframes animateView-enter {
+                from {opacity:0;}
+                to {opacity:1;}
+        }
+        @-webkit-keyframes animateView-enter {
+            from {opacity:0;}
+            to {opacity:1;}
+        }
+        @keyframes animateView-leave {
+            from {opacity: 1;}
+            to {opacity: 0;}
+        }
+        @-webkit-keyframes animateView-leave {
+            from {opacity: 1;}
+            to {opacity: 0;}
+        }
+
+        设置了关键帧之后，我们可以简单地把动画附加到ngAnimate添加的CSS样式类上：
+        .fade-in.ng-enter {
+            -webkit-animation: 2s fade-in-enter-animation;
+            animation: 2s fade-in-enter-animation;
+        }
+        .fade-in.ng-leave {
+            -webkit-animation: 2s fade-in-leave-animation;
+            animation: 2s fade-in-leave-animation;
+        }
+        3. JavaScript动画
+        当用JavaScript做动画时，需要在动画的描述对象上定义enter和leave属性。
+
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.fade-in', function () {
+                        return {
+                            enter: function (element, done) {
+// 不使用jQuery的原始动画
+// 用jQuery会简单很多
+                                var op = 0, timeout,
+                                        animateFn = function () {
+                                            op += 10;
+                                            element.css('opacity', op / 100);
+                                            if (op >= 100) {
+                                                clearInterval(timeout);
+                                                done();
+                                            }
+                                        };
+// 把初始透明度设为0
+                                element.css('opacity', 0);
+                                timeout = setInterval(animateFn, 100);
+                            },
+                            leave: function (element, done) {
+                                var op = 100,
+                                        timeout,
+                                        animateFn = function () {
+                                            op -= 10;
+                                            element.css('opacity', op / 100);
+                                            if (op <= 0) {
+                                                clearInterval(timeout);
+                                                done();
+                                            }
+                                        };
+                                element.css('opacity', 100);
+                                timeout = setInterval(animateFn, 100);
+                            }
+                        }
+                    });
+
+
+    </h2>
+    </pre>
+
+
+<hr />
+<pre>
+    <h2>
+        22.9.2 ngView动画
+        ngView指令触发这些事件：
+        动 作                         事件名称
+        新的视图内容准备好了              enter
+        正在离开，已有的内容将被隐藏          leave
+
+
+        对这三个例子，我们使用下面这个HTML来运行：
+        &lt;a href="#/">Home&lt;/a>
+        &lt;a href="#/two">Second view&lt;/a>
+        &lt;a href="#/three">Third view&lt;/a>
+
+        &lt;div class="animateView" ng-view>&lt;/div>
+            当跟ng-view指令协作时，我们是在跟Angular内部的路由打交道。有关路由的更多信息，请
+        参阅第12章。 Angular路由的下载地址是： http://code.angularjs.org/1.2.13/angular-route.js。
+        对于下面的示例，可以把路由设置为：
+        angular.module('myApp', ['ngAnimate', 'ngRoute'])
+             .config(function($routeProvider) {
+                $routeProvider.when('/', {
+                template: '&lt;h2>One&lt;/h2>'
+                }).when('/two', {
+                template: '&lt;h2>Two&lt;/h2>'
+                }).when('/three', {
+                template: '&lt;h2>Three&lt;/h2>'
+                });
+        })
+        示例中的三个路由，每个显示了一个不同的视图。
+        1. CSS3过渡
+             要让ngView列表中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，以
+        及为enter和edit状态定义最终状态的类：
+        .animateView.ng-enter,
+        .animateView.ng-leave {
+                transition: 2s linear all;
+                -webkit-transition: 2s linear all;
+        }
+             至此，可以简单地在动画中定义初始和最终阶段的CSS属性。这里，我们把元素从绿色的文
+        字淡入，在进入动画的最终阶段把文字变成黑色。在离开（元素移除）动画中，我们把属性反转：
+        .animateView.ng-enter {
+            opacity: 0;
+            color: green;
+        }
+        .animateView.ng-enter.ng-enter-active {
+            opacity: 1;
+            color: black;
+        }
+        .animateView.ng-leave {}
+        .animateView.ng-leave.ng-leave-active {
+                opacity: 0;
+        }
+        2. CSS3关键帧动画
+            首先，添加我们为动画定义的@keyframe：
+        @keyframes animateView-enter {
+            from {opacity:0;}
+            to {opacity:1;}
+        }
+        @-webkit-keyframes animateView-enter {
+            from {opacity:0;}
+            to {opacity:1;}
+        }
+        @keyframes animateView-leave {
+            from {opacity: 1;}
+            to {opacity: 0;}
+        }
+        @-webkit-keyframes animateView-leave {
+            from {opacity: 1;}
+            to {opacity: 0;}
+        }
+        为了应用动画，需要做的就是在我们的类中添加动画CSS样式：
+        .animateView.ng-enter {
+            -webkit-animation: 2s animateView-enter;
+            animation: 2s animateView-enter;
+        }
+        .animateView.ng-leave {
+            -webkit-animation: 2s animateView-leave;
+            animation: 2s animateView-leave;
+        }
+        3. JavaScript动画
+        首先，我们需要下载①并且在文档的头部包含jQuery。
+        当用JavaScript做动画时，需要在动画的描述对象上定义enter和leave属性。
+
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.animateView', function () {
+                        return {
+                            enter: function (element, done) {
+// 显示如何用jQuery实现动画的例子
+// 注意，这需要在HTML中包含jQuery
+                                $(element).css({
+                                    opacity: 0
+                                });
+                                $(element).animate({
+                                    opacity: 1
+                                }, done);
+                            },
+                            leave: function (element, done) {
+                                done();
+                            }
+                        }
+                    });
+
+    </h2>
+    </pre>
+
+
+<hr />
+<pre>
+    <h2>
+        22.9.3 ngInclude动画
+        ngInclude指令触发这些事件：
+        动 作                     事件名称
+        新的视图内容准备好了          enter
+        正在离开，已有的内容将被隐藏  leave
+        ——————————
+        ① http://jquery.com/download/
+              对这三个例子，我们使用下面这个HTML来运行：
+        &lt;div ng-init="template.url='/home.html'"
+             ng-controller="HomeController">
+            &lt;button ng-click="template.url='/home.html'">
+                Home
+            &lt;/button>
+            &lt;button ng-click="template.url='/second.html'">
+                Second
+            &lt;/button>
+            &lt;button ng-click="template.url='/third.html'">
+                Third
+            &lt;/button>
+            &lt;div class="animateInclude"
+                 ng-include="template.url">
+            &lt;/div>
+        &lt;/div>
+         我们也在页面中包含内联模板（为了演示），也可以把这些视图设置为从远程服务器获取。
+        &lt;script type="text/ng-template" id="/home.html">
+            Home Template
+        &lt;/script>
+        &lt;script type="text/ng-template" id="/second.html">
+            Second Template
+        &lt;/script>
+        &lt;script type="text/ng-template" id="/third.html">
+            Third Template
+        &lt;/script>
+        1. CSS3过渡
+           要让ngInclude列表中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，
+        以及为enter和edit状态定义最终状态的类：
+        .animateInclude.ng-enter,
+        .animateInclude.ng-leave {
+            transition: 2s linear all;
+            -webkit-transition: 2s linear all;
+        }
+         至此，可以简单地在动画中定义初始和最终阶段的CSS属性。这里，我们把元素从绿色的文
+        字淡入，在进入动画的最终阶段把文字变成黑色。在离开（元素移除）动画中，我们把属性反转：
+        .animateInclude.ng-enter {
+            opacity: 0;
+            color: green;
+        }
+        .animateInclude.ng-enter.ng-enter-active {
+            opacity: 1;
+            color: black;
+        }
+        .animateInclude.ng-leave {}
+        .animateInclude.ng-leave.ng-leave-active {
+               opacity: 0;
+        }
+        2. CSS3动画
+        首先，添加为动画定义的@keyframe：
+        @keyframes animateInclude-enter {
+            from {opacity:0;}
+            to {opacity:1; color: green}
+        }
+        @-webkit-keyframes animateInclude-enter {
+            from {opacity:0;}
+            to {opacity:1; color: green}
+        }
+        @keyframes animateInclude-leave {
+            from {opacity: 1;}
+            to {opacity: 0; color: black}
+        }
+        @-webkit-keyframes animateInclude-leave {
+            from {opacity: 1;}
+            to {opacity: 0; color: black}
+        }
+        为了应用动画，需要做的就是在我们的类中添加动画CSS样式：
+        .animateInclude.ng-enter {
+            -webkit-animation: 2s animateInclude-enter;
+            animation: 2s animateInclude-enter;
+        }
+        .animateInclude.ng-leave {
+            -webkit-animation: 2s animateInclude-leave;
+            animation: 2s animateInclude-leave;
+        }
+        3. JavaScript动画
+        当用JavaScript做动画时，需要在动画的描述对象上定义enter和leave属性。
+
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.animateInclude', function () {
+                        return {
+                            enter: function (element, done) {
+// 显示如何用jQuery实现动画的例子
+// 注意，这需要在HTML中包含jQuery
+                                $(element).css({
+                                    opacity: 0
+                                });
+                                $(element).animate({
+                                    opacity: 1
+                                }, done);
+                            },
+                            leave: function (element, done) {
+                                done();
+                            }
+                        }
+                    });
+
+
+    </h2>
+    </pre>
+
+
+<hr />
+<pre>
+    <h2>
+        22.9.4 ngSwitch动画
+        ngSwitch指令触发这些事件：
+        动 作                                 事件名称
+        新的视图内容准备好了                   enter
+        正在离开，已有的内容将被隐藏          leave
+
+        ngSwitch指令类似于前面的例子。对于这些例子，我们用下面使用了ng-switch指令的HTML
+        来运行：
+        &lt;div ng-init="template='home'"
+             ng-controller="HomeController">
+            &lt;button ng-click="template='home'">Home&lt;/button>
+            &lt;button ng-click="template='second'">Second&lt;/button>
+            &lt;button ng-click="template='third'">Third&lt;/button>
+            &lt;div ng-switch="template">
+                &lt;div class="animateSwitch"
+                     ng-switch-when="home">
+                    &lt;h1>Home&lt;/h1>
+                &lt;/div>
+                &lt;div class="animateSwitch"
+                     ng-switch-when="second">
+                    &lt;h1>Second&lt;/h1>
+                &lt;/div>
+                &lt;div class="animateSwitch"
+                     ng-switch-when="third">
+                    &lt;h1>Home&lt;/h1>
+                &lt;/div>
+            &lt;/div>
+        &lt;/div>
+        1. CSS3过渡
+        要让ngSwitch列表中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，
+        以及为enter和edit状态定义最终状态的类：
+        .animateSwitch.ng-enter,
+        .animateSwitch.ng-leave {
+            transition: 2s linear all;
+            -webkit-transition: 2s linear all;
+        }
+        至此，可以简单地在动画中定义初始和最终阶段的CSS属性。这里，我们把元素从绿色的
+        文字淡入，在进入动画的最终阶段把文字变成黑色。在离开（元素移除）动画中，我们把属性
+        反转：
+        .animateSwitch.ng-enter {
+            opacity: 0;
+            color: green;
+        }
+        .animateSwitch.ng-enter.ng-enter-active {
+            opacity: 1;
+            color: black;
+        }
+        .animateSwitch.ng-leave {}
+            .animateSwitch.ng-leave.ng-leave-active {
+            opacity: 0;
+        }
+        2. CSS3动画
+        首先，添加为动画定义的@keyframe：
+        @keyframes animateSwitch-enter {
+            from {opacity:0;}
+            to {opacity:1; color: green}
+        }
+        @-webkit-keyframes animateSwitch-enter {
+            from {opacity:0;}
+            to {opacity:1; color: green}
+        }
+        @keyframes animateSwitch-leave {
+            from {opacity: 1;}
+            to {opacity: 0; color: black}
+            }
+        @-webkit-keyframes animateSwitch-leave {
+                from {opacity: 1;}
+                to {opacity: 0; color: black}
+            }
+        为了应用动画，需要做的就是在我们的类中添加动画CSS样式：
+        .animateSwitch.ng-enter {
+            -webkit-animation: 2s animateSwitch-enter;
+            animation: 2s animateSwitch-enter;
+        }
+        .animateSwitch.ng-leave {
+            -webkit-animation: 2s animateSwitch-leave;
+            animation: 2s animateSwitch-leave;
+        }
+        3. JavaScript动画
+        当用JavaScript做动画时，需要在动画的描述对象上定义enter和leave属性。
+
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.animateSwitch', function () {
+                        return {
+                            enter: function (element, done) {
+// 显示如何用jQuery实现动画的例子
+// 注意，这需要在HTML中包含jQuery
+                                $(element).css({
+                                    opacity: 0
+                                });
+                                $(element).animate({
+                                    opacity: 1
+                                }, done);
+                            },
+                            leave: function (element, done) {
+                                done();
+                            }
+                        }
+                    });
+
+
+    </h2>
+    </pre>
+
+<hr />
+<pre>
+    <h2>
+        22.9.5 ngIf动画
+        ngIf指令触发这些事件：
+        动 作                                      事件名称
+        ngIf的内容变更了，新DOM被插入之后触发              enter
+        在ngIf的内容被移除之前触发                  leave
+        对于后面的ngIf示例，我们用这段HTML来运行：
+        &lt;div ng-init="show=false"
+             ng-controller="HomeController">
+            &lt;button ng-click="show=!show">Show&lt;/button>
+            &lt;div ng-if="show" class="animateNgIf">
+                &lt;h2>Show me&lt;/h2>
+            &lt;/div>
+        &lt;/div>
+        1. CSS3过渡
+        要让ngIf中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，以及为
+        enter和edit状态定义最终状态的类：
+        .animateNgIf.ng-enter,
+        .animateNgIf.ng-leave {
+        transition: 2s linear all;
+        -webkit-transition: 2s linear all;
+        }
+        至此，可以简单地在动画中定义初始和最终阶段的CSS属性。这里，我们把元素从绿色的文
+        字淡入，在进入动画的最终阶段把文字变成黑色。在离开（元素移除）动画中，我们把属性反转：
+        .animateNgIf.ng-enter {
+        opacity: 0;
+        color: green;
+        }
+        .animateNgIf.ng-enter.ng-enter-active {
+        opacity: 1;
+        color: black;
+        }
+        .animateNgIf.ng-leave {}
+        .animateNgIf.ng-leave.ng-leave-active {
+        opacity: 0;
+        }
+        2. CSS3动画
+        首先，添加为动画定义的@keyframe：
+        @keyframes animateNgIf-enter {
+        from {opacity:0;}
+        to {opacity:1;}
+        }
+        @-webkit-keyframes animateNgIf-enter {
+        from {opacity:0;}
+        to {opacity:1;}
+        }
+        @keyframes animateNgIf-leave {
+        from {opacity: 1;}
+        to {opacity: 0;}
+        }
+        @-webkit-keyframes animateNgIf-leave {
+        from {opacity: 1;}
+        to {opacity: 0;}
+        }
+        为了应用动画，需要做的就是在我们的类中添加动画CSS样式：
+        .animateNgIf.ng-enter {
+        -webkit-animation: 2s animateNgIf-enter;
+        animation: 2s animateNgIf-enter;
+        }
+        .animateNgIf.ng-leave {
+        -webkit-animation: 2s animateNgIf-leave;
+        animation: 2s animateNgIf-leave;
+        }
+        3. JavaScript动画
+        当用JavaScript做动画时，需要在动画的描述对象上定义enter和leave属性。
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.animateNgIf', function () {
+                        return {
+                            enter: function (element, done) {
+// 显示如何用jQuery实现动画的例子
+// 注意，这需要在HTML中包含jQuery
+                                $(element).css({
+                                    opacity: 0
+                                });
+                                $(element).animate({
+                                    opacity: 1
+                                }, done);
+                            },
+                            leave: function (element, done) {
+                                done();
+                            }
+                        }
+                    });
+
+    </h2>
+</pre>
+
+<hr />
+<pre>
+    <h2>
+        22.9.6 ngClass动画
+             当视图中的样式类发生变化时，是可以基于行为去产生动画的。当一个CSS类变更时（比如
+        在ngShow和ngHide指令中）， $animate会通知和触发动画，不管是增加了新类，还是移除了旧类。
+                不同于使用进入动画的命名约定，我们为ngClass使用一个新的CSS约定，依次为新类加后
+        缀，变为[CLASSNAME]-add和[CLASSNAME]-remove。
+             类似于上面的进入事件， ngAnimate会在合适的时间为具体的事件添加[CLASSNAME]-addactive和[CLASSNAME]-remove-active。
+             当我们在这些样式类上做动画时，动画先触发，然后最终的类在动画结束时才被添加。当一
+        个类被移除时，它直到动画结束之前都还在元素上。
+        ngClass指令触发这些事件：
+        动 作                                 事件名称
+        ngClass求值为真之后，类被添加之前            add
+        类被移除之前触发                         remove
+        对于后面的ngClass示例，我们用这段HTML来运行：
+        &lt;div ng-init="grow=false"
+             ng-controller="HomeController">
+            &lt;button ng-click="grow=!grow">Grow&lt;/button>
+            &lt;div ng-class="{grown:grow}"
+        class="animateMe">
+        &lt;h2>Grow me&lt;/h2>
+        &lt;/div>
+        &lt;/div>
+        1. CSS3过渡
+        要让ngClass中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，以及
+        为enter和edit状态定义最终状态的类：
+        .animateMe.grown-add,
+        .animateMe.grown-remove {
+        transition: 2s linear all;
+        -webkit-transition: 2s linear all;
+        }
+        至此，可以简单地在动画中定义初始和最终阶段的CSS属性。
+        .grown {font-size: 50px;}
+        .animateMe.grown-add {
+        font-size: 16px;
+        }
+        .animateMe.grown-add.grown-add-active {
+        font-size: 50px;
+        }
+        .animateMe.grown-remove {}
+        .animateMe.grown-remove.grown-remove-active {
+        font-size: 16px;
+        }
+        2. CSS3动画
+        首先，添加为动画定义的@keyframe。
+        @keyframes animateMe-add {
+        from {font-size: 16px;}
+        to {font-size: 50px;}
+        }
+        @-webkit-keyframes animateMe-add {
+        from {font-size: 16px;}
+        to {font-size: 50px;}
+        }
+        @keyframes animateMe-remove {
+        to {font-size: 50px;}
+        from {font-size: 16px;}
+        }
+        @-webkit-keyframes animateMe-remove {
+        to {font-size: 50px;}
+        from {font-size: 16px;}
+        }
+        为了应用动画，需要做的就是在我们的类中添加动画CSS样式：
+        .animateMe.grown-add {
+        -webkit-animation: 2s animateMe-add;
+        animation: 2s animateMe-add;
+        }
+        .animateMe.grown-remove {
+        -webkit-animation: 2s animateMe-remove;
+        animation: 2s animateMe-remove;
+        }
+
+        3. JavaScript动画
+        当用JavaScript做动画时，需要在动画的描述对象上定义addClass和removeClass属性。
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.animateMe', function () {
+                        return {
+                            addClass: function (ele, clsName, done) {
+// 显示如何用jQuery实现动画的例子
+// 注意， 这需要在HTML中包含jQuery
+                                if (clsName === 'grown') {
+                                    $(ele).animate({
+                                        'font-size': '50px'
+                                    }, 2000, done);
+                                } else {
+                                    done();
+                                }
+                            },
+                            removeClass: function (ele, clsName, done) {
+                                if (clsName === 'grown') {
+                                    $(ele).animate({
+                                        'font-size': '16'
+                                    }, 2000, done);
+                                } else {
+                                    done();
+                                }
+                            }
+                        }
+                    });
+
+    </h2>
+</pre>
+
+<hr />
+<pre>
+    <h2>
+        22.9.7 ngShow/ngHide动画
+        ngShow和ngHide指令在显示或者隐藏元素时，使用了.ng-hide类。可以在显示和隐藏DOM
+        元素之间的这段时间添加动画。
+        当在这些样式类上做动画时，动画会先触发，它完成时，最终的.ng-hide才会被加到DOM
+        元素上。
+        因为当移除ng-hide类时， ng-hide指令还在DOM元素上，所以在它完成之前，我们是看不
+        到动画的。因此，需要告诉CSS把我们的样式类显示出来，不要折叠。
+        ngShow和ngHide指令触发这些事件：
+        动 作 事件名称
+        ngClass求值为真之后，类被添加之前 add
+        类被移除之后 remove
+        对后面的ngHide例子，我们使用下面这个HTML来运行：
+        &lt;div ng-init="show=false"
+             ng-controller="HomeController">
+            &lt;button ng-click="show=!show">Show&lt;/button>
+            &lt;div ng-show="show" class="animateMe">
+                &lt;h2>Show me&lt;/h2>
+            &lt;/div>
+        &lt;/div>
+
+        1. CSS3过渡
+        要让ngHide中的元素动起来，我们需要确认添加了展现元素初始状态的CSS样式类，以及为
+        enter和edit状态定义最终状态的类：
+        .animateMe.ng-hide-add,
+        .animateMe.ng-hide-remove {
+        transition: 2s linear all;
+        -webkit-transition: 2s linear all;
+        display: block !important;
+        }
+        注意CSS块中的最后一行：它告诉CSS渲染这个类，并且，对于display属性而言，没有其
+        他备选值。没有这行的话，这个元素就不会显示了。
+        至此，可以简单地在动画中定义初始和最终阶段的CSS属性。
+        .animateMe.ng-hide-add {
+        opacity: 1;
+        }
+        .animateMe.ng-hide-add.ng-hide-add-active
+        {
+        opacity: 0;
+        }
+        .animateMe.ng-hide-remove {
+        opacity: 0;
+        }
+        .animateMe.ng-hide-remove.ng-hide-remove-active {
+        opacity: 1;
+        }
+        2. CSS3动画
+        首先，添加为动画定义的@keyframe。
+        @keyframes animateMe-add {
+        from {opacity: 1;}
+        to {opacity: 0;}
+        }
+        @-webkit-keyframes animateMe-add {
+        from {opacity: 1;}
+        to {opacity: 0;}
+        }
+        @keyframes animateMe-remove {
+        from {opacity:0;}
+        to {opacity:1;}
+        }
+        @-webkit-keyframes animateMe-remove {
+        from {opacity:0;}
+        to {opacity:1;}
+        }
+        为了应用动画，需要做的就是在我们的类中添加动画CSS样式：
+        .animateMe.ng-hide-add {
+        -webkit-animation: 2s animateMe-add;
+        animation: 2s animateMe-add;
+        }
+        .animateMe.ng-hide-remove {
+        图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+        318 第 22 章 Angular 动画
+        -webkit-animation: 2s animateMe-remove;
+        animation: 2s animateMe-remove;
+        display: block !important;
+        }
+        3. JavaScript动画
+        当用JavaScript做动画时，需要在动画的描述对象上定义addClass和removeClass属性。
+
+            angular.module('myApp', ['ngAnimate'])
+                    .animation('.animateMe', function () {
+                        return {
+                            addClass: function (ele, clsName, done) {
+// 显示如何用jQuery实现动画的例子
+// 注意，这需要在HTML中包含jQuery
+                                if (clsName === 'ng-hide') {
+                                    $(ele).animate({
+                                        'opacity': 0
+                                    }, 2000, done);
+                                } else {
+                                    done();
+                                }
+                            },
+                            removeClass: function (ele, clsName, done) {
+                                if (clsName === 'ng-hide') {
+                                    $(ele).css('opacity', 0);
+// 强制移除ng-hide类
+// 这样
+// 我们就可以真的把动画显示出来
+                                    $(ele).removeClass('ng-hide');
+                                    $(ele).animate({
+                                        'opacity': 1
+                                    }, 2000, done);
+                                } else {
+                                    done();
+                                }
+                            }
+                        }
+                    });
+
+    </h2>
+</pre>
+
+<hr />
+<pre>
+    <h2>
+        22.10 创建自定义动画
+             $animate服务给我们在指令中实现自定义动画提供了帮助。把$animate服务注入到我们自
+        己的应用中之后，可以用暴露出的事件为每个事件触发$animate对象上的关联函数。
+        要在我们自己的指令中开始动画，需要注入$animate服务。
+
+            angular.module('myApp', ['ngAnimate'])
+                    .directive('myDirective', function ($animate) {
+                        return {
+                            template: '<div class="myDirective"></div>',
+                            link: function (scope, ele, attrs) {
+// 在这里添加动画
+// 例如：
+                                $animate['addClass'](element, 'ng-hide');
+                            }
+                        }
+                    });
+        至此，就可以把事件绑定到指令上，开始显示我们的动画了。
+        建立了指令之后，我们可以调用$animate函数创建一个动画，与我们的指令通信。
+        angular.module('myApp', ['ngAnimate'])
+              .animation('.scrollerAnimation', function() {
+                    return {
+                    animateFun: function(element, done) {
+                        // 我们可以在这个函数中
+                        // 做任意想做的事
+                        // 但是需要调用done
+                        // 来让angular知道动画结束了
+                    }
+                }
+        });
+        $animate服务暴露了一些方法，为内置指令的动画事件提供帮助。这些$animate服务暴露
+        出来的事件是：
+             enter；
+             leave；
+             move；
+             addClass；
+             removeClass。
+            $animate服务把这些事件以函数的方式提供，让我们能在自己的指令中处理自定义动画。
+
+        22.10.1 addClass()
+              addClass()方法触发了一个基于className变量的自定义动画事件，并且把className值作
+        为CSS类添加到元素上。当在DOM元素上添加样式类时， $animate服务给这个className添加了
+        一个叫-add的后缀来让我们建立动画。
+                  如果没有CSS过渡，在CSS选择器（[className]-add）上也没有定义关键帧动
+        画， ngAnimate就不会触发这个动画，只是会把这个样式类加上。
+                addClass()方法带三个参数。
+                 element（jQuery/jqLite元素）
+                正在建立动画的元素。
+                 className（字符串）
+                正在建立动画，并且添加到元素上的CSS类。
+                 done（函数）
+                当动画完成时调用的回调函数。
+        angular.module('myApp', ['ngAnimate'])
+            .directive('myDirective', function($animate) {
+                return {
+                template: '
+                &lt;div class="myDirective">&lt;/div> ',
+                    link: function(scope, ele, attrs) {
+                                ele.bind('click', function() {
+                                $animate.addClass(ele, 'greenlight');
+                            });
+                        }
+                    }
+        });
+
+        调用addClass()方法会经过如下步骤：
+        (1) 运行所有在元素上用JavaScript定义的动画；
+        (2) [className]-add类被添加到元素上；
+        (3) $animate检查CSS样式来寻找过渡/动画的持续时间和延迟属性；
+        (4) [className]-add-active类被添加到元素的classList中（触发CSS动画）；
+        (5) $animate用定义过的持续时间等待完成；
+        (6) 动画结束， $animate移除两个添加的类： [className]-add和[className]-add-active；
+        (7) className类被添加到元素上；
+        (8) 触发done()回调函数（如果定义了的话）。
+        22.10.2 removeClass()
+              removeClass()方法触发了一个基于className的自定义动画事件，并且移除在className
+        值中定义的CSS类。当从DOM元素上移除一个类的时候， $animate服务给这个className添加了
+        一个叫-remove的后缀来让我们建立动画。
+                 如果没有CSS过渡，在CSS选择器（[className]-remove）上也没有定义关键
+        帧动画， ngAnimate就不会触发这个动画，只是会把这个样式类加上。
+            removeClass()方法带三个参数。
+             element（jQuery/jqLite元素）
+            正在建立动画的元素。
+             className（字符串）
+            正在建立动画，并且从元素上移除的CSS类。
+             done（函数）
+            当动画完成时调用的回调函数。
+            angular.module('myApp', ['ngAnimate'])
+                    .directive('myDirective', function ($animate) {
+                        return {
+                            template: '<div class="myDirective"></div>',
+                            link: function (scope, ele, attrs) {
+                                ele.bind('click', function () {
+                                    $animate.addClass(ele, 'greenlight');
+                                });
+                            }
+                        }
+                    });
+        调用removeClass()动画方法会经历如下步骤：
+            (1) 运行所有在元素上用JavaScript定义的动画；
+            (2) [className]-remove类被添加到元素上；
+            (3) $animate检查CSS样式来寻找过渡/动画的持续时间和延迟属性；
+            (4) [className]-remove-active类被添加到元素的classList中（触发CSS动画）；
+            (5) $animate用定义过的持续时间等待完成；
+            (6) 动 画 结 束 ， $animate 移 除 三 个 添 加的 类 ： [className]、 [className]-remove 和
+            [className]-remove-active；
+            (7) 触发done()回调函数（如果定义了的话）。
+
+
+        22.10.3 enter()
+            enter()方法把元素添加到它在DOM中的父元素，然后运行enter动画。动画开始之后，
+        $animation服务会添加ng-enter和ng-enter-active类，给指令一个机会来建立动画。
+        enter()方法最多可以带四个参数。
+             element（jQuery/jqLite元素）
+            正在建立动画的元素。
+             parent（jQuery/jqLite元素）
+            这个元素的父元素，它是我们enter动画的焦点。
+             after（jQuery/jqLite元素）
+            这个元素的兄弟元素，它将会成为enter动画的焦点。
+             done（函数）
+            当动画完成时调用的回调函数。
+
+            当动画完成时调用的回调函数 。
+            angular.module('myApp', ['ngAnimate'])
+                    .directive('myDirective', function ($animate) {
+                        return {
+                            template: '<div class="myDirective">' +
+                            '<h2>Hi</h2></div>',
+                            link: function (scope, ele, attrs) {
+                                ele.bind('click', function () {
+                                    $animate.enter(ele, ele.parent());
+                                });
+                            }
+                        }
+                    });
+            调用enter()
+            动画方法会经历如下步骤 ：
+
+                (1) 本元素被插入父元素中，或者是after元素后面；
+                (2) $animate运行所有在元素上用JavaScript定义的动画；
+                (3) .ng-enter类被添加到元素的classList中；
+                (4) $animate检查CSS样式来寻找过渡/动画的持续时间和延迟属性。
+                (5) .ng-enter-active类被添加到元素的classList中（触发动画）；
+                (6) $animate用定义过的持续时间等待完成；
+                (7) 动画结束， $animate从元素移除.ng-enter和.ng-enter-active类；
+                (8) 触发done()回调函数（如果定义了的话）。
+
+
+        22.10.4 leave()
+             leave()方法运行leave动画。当它结束运行时，会把元素从DOM移除。动画开始之后，它
+        会在元素上添加.ng-leave和.ng-leave-active类。
+        leave()方法带两个参数。
+             element（jQuery/jqLite元素）
+            正在建立动画的元素。
+             done（函数）
+            当动画完成时调用的回调函数。
+        &lt;script !src="">
+            angular.module('myApp', ['ngAnimate'])
+                    .directive('myDirective', function ($animate) {
+                        return {
+                            template: '&lt;div class="myDirective">' +
+                            '&lt;h2>Hi&lt;/h2>&lt;/div>',
+                            link: function (scope, ele, attrs) {
+                                ele.bind('click', function () {
+                                    $animate.leave(ele);
+                                });
+                            }
+                        }
+                    });
+        &lt;/script>
+
+        调用leave()动画方法会经历如下步骤：
+            (1) $animate可运行所有在元素上用JavaScript定义的动画；
+            (2) .ng-leave类被添加到元素的classList中；
+            (3) $animate检查CSS样式来寻找过渡/动画的持续时间和延迟属性；
+            (4) .ng-leave-active类被添加到元素的classList中（触发动画）；
+            (5) $animate用定义过的持续时间等待完成；
+            (6) 动画结束， $animate从元素移除.ng-leave和.ng-leave-active类；
+             (7) 元素被从DOM移除；
+            (8) 触发done()回调函数（如果定义了的话）。
+
+
+        22.10.5 move()
+           move()函数触发move DOM动画。在动画开始之前， $animate服务或者把元素插入父容器中，或
+        者直接加到after元素之后，如果有的话。动画开始后，为了动画的持续，.ng-move和.ng-move-active
+        就会被添加。
+                move()方法带有四个参数。
+                 element（jQuery/jqLite元素）
+                正在建立动画的元素。
+                 parent（jQuery/jqLite元素）
+                这个元素的父元素，它是我们enter动画的焦点。
+                 after（jQuery/jqLite元素）
+                这个元素的兄弟元素，它将会成为enter动画的焦点。
+                 done（函数）
+                当动画完成时调用的回调函数。
+
+        &lt;script !src="">
+            angular.module('myApp', ['ngAnimate'])
+                    .directive('myDirective', function ($animate) {
+                        return {
+                            template: '&lt;div class="myDirective">' +
+                            '&lt;h2>Hi&lt;/h2>&lt;/div>',
+                            link: function (scope, ele, attrs) {
+                                ele.bind('click', function () {
+                                    $animate.move(ele, ele.parent());
+                                });
+                            }
+                        }
+                    });
+
+        &lt;/script>
+
+        (1) 元素被移到父元素中，或者在after元素之后；
+        (2) $animate可运行所有在元素上用JavaScript定义的动画；
+        (3) .ng-move类被添加到元素的classList中；
+        (4) $animate检查CSS样式来寻找过渡/动画的持续时间和延迟属性；
+        (5) .ng-move-active类被添加到元素的classList中（触发动画）；
+        (6) $animate用定义过的持续时间等待完成；
+        (7) 动画结束， $animate从元素移除.ng-move和.ng-move-active类；
+        (8) 触发done()回调函数（如果定义了的话）。
+        
+        
+
+    </h2>
+</pre>
+
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+</pre>
+
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+</pre>
+
+
+</body>
+</html>

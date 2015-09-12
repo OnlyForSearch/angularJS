@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+        <pre>
+            <h2>
+                    让我们来看看Angular在后台是如何工作的。如何只使用几行代码就得到神奇的数据绑定？
+                最重要的是理解$digest循环是如何工作的，以及如何使用$apply()方法。
+                      在标准的浏览器流程中，当事件被触发时（比如点击一个链接），浏览器会执行注册给该事
+                件的回调函数。
+                         页面加载、 $http请求返回响应、鼠标移动以及按钮被点击等情况都会触发事件。
+                          当事件被触发时， JavaScript就会创建一个事件对象，并执行这个事件对象所在的监听特定事
+                件的所有函数。然后它会运行JavaScript函数内的回调方法，这会回到浏览器中，还可能更新DOM。
+                      同一时间不能运行两个事件。浏览器会等待前一个事件处理程序执行完成，再
+                调用下一个事件处理程序。
+                在非Angular JavaScript环境中，可以给div的点击事件附加一个回调函数。无论何时，只要
+                         发现元素上的点击事件，这个回调函数就会运行：
+                        var div = document.getElementById("clickDiv");
+                        div.addEventListener("click", function(evt) {
+                        console.log("evt", evt);
+                        });
+                        你可以打开Chrome开发者工具，然后将上面的代码复制粘贴到任意页面中，再
+                点击页面试试。
+                      无论何时，只要浏览器检测到点击事件， 就会调用使用addEventListener注册到文档上的函数。
+                         当我们将Angular混入这个流程中时，它会扩展这个标准的浏览器流程，创建一个Angular上
+                下文。这个Angular上下文指的是运行在Angular事件循环内的特定代码，该Angular事件循环通常
+                被称作$digest循环。为了理解这个Angular上下文，需要看看在它里面到底发生了什么。而
+                            $digest循环有两个主要组成部分：
+                             $watch列表；
+                             $evalAsync列表。
+            </h2>
+        </pre>
+
+
+        <hr />
+<pre>
+    <h2>
+        23.1 $watch 列表
+        每当我们在视图中追踪一个事件时，会给它注册一个回调函数，然后希望在页面中触发该事
+        件时调用这个回调函数。回想一下第一个例子：
+        <!DOCTYPE html>
+        &lt;html ng-app>
+        &lt;head>
+            &lt;title>Simple app&lt;/title>
+            &lt;script
+                    src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.js">
+            &lt;/script>
+        &lt;/head>
+        &lt;body>
+        &lt;input ng-model="name" type="text" placeholder="Your name">
+
+        &lt;h1>Hello {{ name }}&lt;/h1>
+        &lt;/body>
+        &lt;/html>
+             无论何时，只要用户更新这个输入字段， UI中的{{ name }}就会改变。发生这一变化是因
+        为我们把UI中的输入字段绑定给了$scope.name属性。为了更新这个视图，Angular需要追踪变化。
+        它是通过给$watch列表添加一个监控函数做到这一点的。
+                  $scope对象上的属性只会在其被用于视图时绑定。在上述例子中，我们只给$watch列表添加
+        了一个函数。
+             记住，对于所有绑定给同一$scope对象的UI元素，只会添加一个$watch到$watch列表中。
+             这些$watch列表会在$digest循环中通过一个叫做“脏值检查”的程序解析。
+    </h2>
+    </pre>
+        <hr />
+<pre>
+    <h2>
+        23.2 脏值检查
+                  脏值检查是一个简单的过程，可归结为一个非常基础的概念：检查值是否发生了变化，而整
+        个应用还没同步该变化。
+                 除Angular之外，脏值检查策略通常用于许多不同的应用程序中。游戏引擎、数
+        据库引擎以及对象关系映射程序（ORMs）都是这类系统很好的例子。
+                  Angular应用持续跟踪当前监控的值（就是监控对象中那些稀奇古怪的东西）。 Angular会遍历
+        $watch列表，如果从旧值更新后的值没有发生变化，它会继续遍历监控列表。如果值发生了变化，
+        该应用会启用新值并继续遍历$watch列表，如图23-1所示。
+        Anguar遍历完整个$watch列表，只要有任何值发生变化，应用将会退回到$watch循环中，
+        直到检测到不再有任何变化。
+                 为什么要再次运行这一循环？因为如果你更新了$watch列表中某个用于更新另一个值的值，
+        Angular将检测不到更新，除非再次运行这个循环。
+                 如果这个循环运行10次或者更多次， Angular应用会抛出一个异常，同时停止运行。如果
+        Angular没有抛出这个异常，应用就可能进入无限循环，这是糟糕的结果。
+                 在未来版本的Angular中，这个框架会使用原生浏览器规范Object.observe()，
+        这将大大加速脏值检查过程。
+    </h2>
+    </pre>
+        <hr />
+<pre>
+    <h2>
+
+
+        23.3 $watch
+              $scope对象上的$watch方法会给Angular事件循环内的每个$digest调用装配一个脏值检查。
+        如果在表达式上检测到变化， Angular总是会返回$digest循环。
+            $watch函数本身接受两个必要参数和一个可选的参数：
+             watchExpression
+            watchExpression可以是一个作用域对象的属性，或者是一个函数。在$digest循环中的每
+        个$digest调用都会涉及它。
+                  如果watchExpression是一个字符串， Angular会在$scope上下文中对它求值。如果它是一个
+        函数，那么Angular会认为它会返回应该被监控的值。
+             listener/callback
+                作为回调的监听器函数，它只会在watchExpression的当前值与先前值不相等（除了首次运
+            行初始化期间）时调用。
+
+         objectEquality（可选）
+               objectEquality是一个进行比较的布尔值，用来告诉Angular是否检查严格相等。
+             $watch函数会给监听器返回一个注销函数，我们可以调用这个注销函数来取消Angular对当
+        前值的监控。
+                //...
+                var unregisterWatch =
+                $scope.$watch('newUser.email',
+                      function(newVal, oldVal) {
+                       if (newVal === oldVal) return; // 初始化
+                });
+                // ...
+        // 稍后，可以通过调用这个注销函数来注销这个监控器
+        unregisterWatch();
+       
+             在这个例子中，假如完成了对newUser.email的监控，那么可以通过调用它所返回的注销函
+        数来清除这个监控器。
+             例如，你想要解析一个输入字段的值，然后使用空格分割全名的方式找到名字和姓氏。假定
+        给定的视图看起来像这样：
+        &lt;input type="text" ng-model="full_name" placeholder="Enter your full name" />
+                永远不要在控制器中使用$watch，因为它会使控制器难以测试。这里为了解释
+        说明姑且允许这样做，稍后我们会将这些监控移到相应的服务中。
+                我们在full_name属性上设置一个$watch监听器来检测值的任意变化。也就是在full_name
+        属性上设置$watch函数。
+                angular.module("myApp")
+                .controller("MyController", ['$scope', function($scope) {
+                $scope.$watch('full_name', function(newVal, oldVal, scope) {
+                // newVal表示在这里可以用的full_name新值
+                // 而oldVal表示full_name的旧值
+                });
+                }]);
+              在这个例子中，我们设置了一个AngularJS表达式，这会让Angular应用“监控full_name属性
+        任何可能的变化，然后在检测到变化时运行指定的函数”。
+             监听函数会在初始化时被调用一次，而此时newVal和oldVal的值都为undefined（并且是相
+        等的） 。在这种情况下，如果正处在初始化阶段或者先前的值发生了变化，通常最好是检查内部
+        的表达式。在监控函数内很容易实现这一检查，就像这样：
+                $scope.$watch('full_name',
+                function(newVal, oldVal, scope) {
+                          if(newVal === oldVal) {
+                            // 只会在监控器初始化阶段运行
+                            } else {
+                            // 初始化之后发生的变化
+                            }
+                        });
+
+        在这段代码中， $scope.$watch()函数在$scope对象上为full_name属性设置了一个监控表
+        达式。
+    </h2>
+    </pre>
+        <hr />
+<pre>
+    <h2>
+
+        23.4 $watchCollection
+                此外， Angular还允许我们为对象的属性或者数组的元素设置浅监控，然后只要属性发生变
+        化就触发监听器回调。
+                 使用$watchCollection还可以检测对象或数组何时发生了变化，以便确定对象或数组中的
+        条目是何时添加、移除或者移动的。 $watchConllection的行为与$digest循环中标准的$watch
+        的行为一样，我们甚至可以把它当作标准的$watch。
+        $watchCollectiion()函数接受2个参数。
+             obj（字符串/函数）
+                这个对象就是一个要监控的对象。如果传入一个字符串，它将被当作Angular表达式求值。
+                如果传入的是一个函数，将在当前作用域中被调用，并且会返回要监控的值。
+             listener（函数）
+                这个回调函数会在集合发生变化时触发。类似于$watch函数，这个函数会被来自$watch的
+                新集合触发调用，而原来的集合（先前集合的副本）以及所在的作用域也随之生效。
+             $watchConllection()函数也返回一个注销函数。调用这个注销函数时，也会取消集合上的
+        $watch。
+                $scope.$watchCollection('names',
+                function(newNames, oldNames, scope) {
+                // names集合已经发生了变化
+                });
+        23.5 页面中的$digest 循环
+                让我们一起来看看Web页面中的$digest循环过程。首先，假设有一个（非常不可靠的）登
+         录页面，这个页面带有一个唯一的用户名字段，允许用户使用唯一的表单验证进行登录。
+                我们不推荐使用这种不安全的表单验证。
+        &lt;h2>Sign in&lt;/h2>
+        &lt;input type="text" placeholder="Your name" ng-model="name" ng-minlength="3" />
+        &lt;input type="submit" ng-click="login()" value="Login" />
+             这里通过ng-model指令在视图中绑定了一个name， Angular会设置一个隐式的监控器，将这
+        个输入字段的值绑定为当前的$scope对象。
+              当用户输入一个字符到表单中时， Angular上下文就会生效并开始遍历$$watchers（$watch
+        列表）。
+              在这个例子中， $watch列表只包含了一个唯一的元素： $scope.name。由于用户通过输入一
+
+        个字符改变了输入字段的值，这个监控函数就会在$scope.name绑定上执行。在我们退出$digest
+        循环之前，这一行为会触发在该值（由ng-model绑定）上运行的验证和格式化操作。
+             由于在digest循环中值发生了变化， Angular需要再次运行这一循环以确定它没有改变作用域
+        对象上的其他值。
+                 为什么要再次运行digest循环？如果有一个名为$scope.full_name的属性由
+        $scope.first_name + $scope.last_name组成，那么这些值的任何变化都会改
+        变$scope.full_name，因此循环需要再次执行以确认不再有任何变化了。
+                 因为这里只改变了$scope.name属性，并没有改变$scope对象中的其他任何属性，所以
+        $digest循环会退出，然后浏览器会重绘DOM以刷新视图。
+                当用户在输入字段中输入他们的名字并点击提交按钮时，会引发一个略有不同的流程。
+             ng-click为DOM元素绑定了浏览器原生的click事件。当这个DOM元素收到点击事件时，
+        ng-click指令会调用$scope.$apply()，同时进入$digest循环
+
+
+    </h2>
+    </pre>
+        <hr />
+<pre>
+    <h2>
+
+        23.6 $evalAsync 列表
+             $evalAsync()方法是一种在当前作用域上调度表达式在未来某个时刻运行的方式。 $digest
+        循环运行的第二个操作是执行$$asyncQueue。可以使用$evalAsync()方法访问这个工作队列。
+             $digest循环期间，贯穿脏值检查生命周期的每个循环之间的队列都是空的，这意味着使用
+        $evalAsync来调用任何函数都会发生两件事情。
+                 函数会在这个方法被调用的某个时刻之后执行。
+                 表达式求值之后至少会执行一次$digest循环。
+        $evalAsync()方法接受一个唯一参数：
+              expression（字符串/函数）
+             这个表达式便是我们想要在当前作用域上执行的东西。如果传入一个字符串， Angular将会
+        在当前作用域上使用$eval求值该表达式。
+                如果传入的是一个函数， Angular将会使用传递给这个函数的scope对象执行函数求值。
+        $scope.$evalAsync('attribute',
+            function(scope) {
+            scope.foo = "Executed"
+        });
+         使用$evalAsync时要注意的一些细节。
+             如果指令直接调用$evalAsync()，它会在Angular操作DOM之后、浏览器渲染之前运行。
+             如果控制器调用$evalAsync()，它也会在Angular操作DOM之后、浏览器渲染之前运行 （永
+             远不要使用$evalAsync()来约定事件的顺序）。
+             无论何时，在Angular中，只要你想要在一个行为的执行上下文外部执行另一个行为，就应
+        该使用$evalAsync()函数。
+            你还可以使用它替代setTimeout()函数，但是它可能在浏览器重新渲染视图之后导致屏幕
+        闪烁。
+
+
+    </h2>
+    </pre>
+        <hr />
+<pre>
+    <h2>
+
+        23.7 $apply
+             $apply()函数可以从Angular框架的外部让表达式在Angular上下文内部执行。例如，假设你
+        实现了一个setTimeout()或者使用第三方库并且想让事件运行在Angular上下文内部时，就必须
+        使用$apply()。
+             $apply()函数接受一个可选的参数：
+                  expression（字符串/函数）
+                   这个表达式可选地接受一个字符串或函数，并且是在当前作用域内执行。
+                  如果传入一个字符串， $apply()首先会在这个字符串上调用$eval()，以强制Angular在局部
+        作用域上下文中使用$eval()运行字符串表达式。
+                 如果传入一个函数，这个函数将会在所传入的函数作用域上执行。
+        $exceptionHandler服务会捕获和处理$eval()方法抛出的所有异常。最后， $apply()方法
+                还会直接调用$digest循环。
+                // 使用要eval的字符串调用$apply示例
+                $scope.$apply('message = "Hello World"');
+                // 使用函数的方式并给函数传入一个作用域
+                $scope.apply(function(scope) {
+                // 然后在函数中使用传入作用域
+                scope.message = "Hello World";
+                });
+                // 使用函数时忽略作用域
+                $scope.$apply(function() {
+                $scope.message = "Hello World";
+                });
+                // 或者通过在操作的尾部调用$apply()以强制运行$digest循环
+                $scope.apply();
+            简而言之，使用$scope.$apply()时可以从外部进入上下文。
+                       如果在事件被触发时调用$apply()，就会使用Angular事件循环来运行它。如果没有调用
+                 $apply()，就不会在事件循环内执行这个函数，而它会运行在Angular上下文外部。
+        23.8 何时使用$apply
+             通常可以依赖于Angular提供的可用于视图中的任意指令来调用$apply()。所有ng-[event]
+            指令（比如ng-click、 ng-keypress）都会调用$apply()。
+                 此外还可以依赖于一系列Angular内置的服务来调用$digest()。比如$http服务会在XHR请
+            求完成并触发更新返回值（promise）之后调用$apply()。
+                 无论何时我们手动处理事件，使用第三方框架（比如jQuery、 Facebook API） ，或者调用
+            setTimeout()，都可以使用$apply()函数让Angular返回$digest循环。
+
+                一般不建议在控制器中使用$apply()，因为这样会导致难以测试，而且如果不得不
+        在控制器中使用$apply()或者$digest()，很可能让事情变得更加难以理解。
+                 当我们将jQuery和Angular集成在一起时（这通常被视为一个肮脏的行为），就需要使用
+        $apply()，因为Angular不会察觉到执行在Angular上下文外部的事件。例如，在使用jQuery插件
+        时（比如datepicker），就需要使用$apply()将来自jQuery的值传递到Angular应用中。
+                在这里，我们构建了一个简单的指令（第10章深入探索了如何构建指令），指令中我们在元
+        素上使用了datepicker这个jQuery插件方法。
+             datepicker插件暴露了一个onSelect事件，这个事件会在用户选择日期时触发。为了在
+        Angular应用内部获取用户选择的日期，我们需要在$apply()函数内运行datepicker的回调函数。
+              ele.datepicker()函数是由jQuery datepicker插件提供的可用于DOM元素的属
+        性方法。要让它工作起来，需要确保在页面上引入了jQuery和jQuery datepicker
+        插件。
+             ctrl.$setViewValue()函数是在DOM元素上使用ng-model时提供的指令。更
+        多信息请参考第5章。\
+
+        &lt;script !src="">
+            app.directive('myDatepicker', function () {
+                return function (scope, ele, attrs, ctrl) {
+                    $(function () {
+// 在元素上调用datepicker方法
+                        ele.datepicker({
+                            dateFormat: 'mm/dd/yy',
+                            onSelect: function (date) {
+                                scope.$apply(function () {
+                                    ctrl.$setViewValue(date);
+                                });
+                            }
+                        });
+                    });
+                }
+            });
+        &lt;/script>
+        
+    &lt;/h2>
+    &lt;/pre>
+
+</body>
+</html>
