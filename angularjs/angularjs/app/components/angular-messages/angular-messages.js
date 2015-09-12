@@ -295,7 +295,7 @@ angular.module('ngMessages', [])
     * <example name="ngMessages-directive" module="ngMessagesExample"
     *          deps="angular-messages.js"
     *          animations="true" fixBase="true">
-    *   <file name="index.html">
+    *   <file name="1index.html">
     *     <form name="myForm">
     *       <label>
     *         Enter your name:

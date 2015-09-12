@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<pre>
+    <h1>
+        对于任何客户端应用而言，应该在构建时就考虑其安全性。然而在任何情况下都很难实现
+        100%的保护，尤其是当客户端应用能看到全部代码的情况下，将更加困难。
+        在这一章，我们来看看一些保持应用程序安全的技术。我们将会看到如何掌握$sce服务，通
+        过使用指令包装授权请求的方式，保障文本输入框的安全性（在讨论受保护的后端时）。
+    </h1>
+    <h2>
+    29.1 严格的上下文转义： $sce 服务
+                严格上下文转义模式（在Angular 1.2及更高版本中默认可用）用于告诉我们的应用，它需要
+        绑定在某个上下文中，以便生成在该上下文中被标记为可信的值。
+             例如，当我们想要使用ng-bind-html绑定一个未加工的HTML给一个元素时，我们希望
+        Angular使用这个HTML渲染该元素，而不是转义的文本。
+        &lt;textarea ng-model="htmlBody">&lt;/textarea>
+
+        &lt;div ng-bind-html="{{ htmlBody }}">&lt;/div>
+                $sce是一个非常出色的服务，它允许我们编写白名单，默认保护代码，并在很大程度上帮助
+        我们防止XSS和其他漏洞。鉴于这种能力，理解它到底是什么很重要，这样我们才可以明智地使
+        用它。
+              在上面的例子中，给&lt;textarea>绑定了一个htmlBody模型。在这个textarea中，用户可以
+        输入他们想在div中呈现的任意代码。例如，可能是编辑博客或者是评论时的实时预览，等等。
+                    如果用户可以输入任意文本到这个文本字段中，这本质上相当于开启了一个巨大的安全漏洞。
+                默认情况下$sce服务会在所有插值表达式上为我们处理这一问题。不确定的字面量永远都是
+        不可信的。
+                实质上，从Angular 1.2及更高版本的内置指令开始， $scope中的值就不再是绑定给它的值了，
+        而是绑定$sce.getTrusted()方法的返回结果。
+                指令也使用新的$sce.parseAs()方法替代$parse服务监控属性绑定。 $sce.parseAs()方法
+        会在所有非恒定的字面量上调用$sce.$getTrusted()方法。
+                实际上， ng-bind-html指令会在幕后调用$sce.parseAsHtml()方法，然后将返回值绑定给
+        DOM元素。 ng-include指令以及任何定义在指令上的templateUrl都会执行这一行为。
+
+                启用这一特性时，所有内置指令都会自动调用$sce。当然，在自己的指令或者其他自定义组
+        件中，也可以使用这一行为。
+             要设置$sce保护，需要注入$sce服务。
+             angular.module('myApp', [])
+                .directive('myDirective', ['$sce', function($sce) {
+                // 这里有权使用$sce服务
+                }])
+                .controller('MyController', ['$scope', '$sce', function($scope, $sce) {
+                // 这里也有权使用$sce服务
+                }]);
+                在上面的指令和控制器内，我们希望Angular能够允许受信任的内容回到视图内，同时接受
+        可信任的插值输入。
+             $sce服务有一个简单的API，让我们能够设置和获取明确特定类型的可信任内容。
+                 例如，要构建一个邮件预览程序。这个邮件客户端会允许用户在他们的邮件中编写HTML；
+        而我们希望给他们的文本提供一个实时预览。
+             其中用到的HTML看起来可能像这样：
+        &lt;div ng-app="myApp">
+            &lt;div ng-controller="MyController">
+                &lt;textarea ng-model="email.rawHtml">&lt;/textarea>
+                &lt;pre ng-bind-html="email.htmlBody">&lt;/pre>
+        现 在 ， 注 意 这 里 email 上 不 同 的 属 性 ： email.rawHtml 和 email.htmlBody 会 获 取 到
+                &lt;textarea>&lt;/textarea>中的大段文本。在控制器内部，会将email.rawHtml解析为HTML，然
+                后再输出到浏览器中。
+            在控制器内，可以设置一个$watch监控email.rawHtml的变化，然后无论什么时候发生变化
+                都在HTML内容上运行一个受信任的解析器。
+                        .controller('MyController', ['$scope', '$sce', function($scope, $sce) {
+                        // 在email.rawHtml上设置监控
+                        $scope.$watch('email.rawHtml', function(v) {
+                        // 假设在非编译($compile)阶段
+                        if(v) {
+                        // 将htmlBody渲染为受信任的HTML
+                        $scope.email.html Body = $sce.trustAsHtml($scope.email.rawHtml);
+                        }
+                        });
+                        }]);
+                            现在，每当email.rawHtml的内容发生变化时，都会在这个内容上执行一个解析器，然后取
+                回适当的HTML内容。而这个内容会被渲染为干净的HTML，也就是应用程序的安全来源。
+                           假如还希望页面上能执行用户编写的自定义JavaScript会怎样呢？例如，希望允许用户编写含
+                自定义JavaScript的电子贺卡，那么就要允许他们在页面让运行自定义的JavaScript代码。
+                要用到的HTML看起来可能像这样：
+                &lt;textarea ng-model="email.rawJs">&lt;/textarea>
+                &lt;pre ng-bind="email.jsBody">&lt;/pre>
+                &lt;button ng-click="runJs()">Run&lt;/button>
+
+            在这段代码中，其运行原理与解析原始文本为安全文本一致。这次，还要添加第三个元素，
+        也就是在作用域中调用runJs()的按钮。
+        正如在HTML绑定中看到的，我们会监控这个JavaScript代码片段：
+                .controller('MyController', ['$scope', '$sce', function($scope, $sce) {
+                // 在email.rawJs上设置监控
+                $scope.$watch('email.rawJs', function(v) {
+                if(v) {
+                $scope.email.jsBody = $sce.trustAsJs($scope.email.rawJs);
+                }
+                });
+                }]);
+        注意，这次我们没有使用trustAsHtml，而是使用trustAsJs()方法。这个方法会告诉Angular
+        将指定的文本解析为可执行的JavaScript代码。调用结束后，这会得到一个可以在应用程序上下文
+        中使用eval()执行的、安全的、已解析的JavaScript代码片段。
+        现在可以将runJs()方法设置给用户，然后可以应用email.rawJS来运行这个代码片段。
+                // ...
+                $scope.runJs = function() {
+                eval($scope.email.jsBody.toString());
+                };
+             对于在JavaScript代码片段上执行eval，还有更智能的方法。但是不推荐在产品中
+        使用eval。
+             Angular中还提供了内置的保护机制：只能从加载应用的同一域中以及应用所在的协议内加
+        载模板。 Angular通过在templateUrl上强制调用$sce.getTrustedResourceUrl来对它进行保护。
+                这个协议不能替代浏览器的同源策略以及跨域资源共享（CORS）。这些策略仍然能够有效保
+        护浏览器。
+             但是可以通过使用$sceDelegateProvider设置域白名单或者黑名单的方式来改写这个值。
+        
+        <hr />
+    29.2 URL 白名单
+    在模块的config()函数内可以设置新的白名单和黑名单。
+                angular.module('myApp', [])
+                .config(['$sceDelegateProvider', function($sceDelegateProvider) {
+                // 设置一个新的白名单
+                $sceDelegateProvider.resourceUrlWhitelist(['self']);
+                }]);
+        可以使用resourceUrlWhitelist()方法设置新的白名单。这个函数接受一个可选的参数。
+         白名单列表（数组）。
+        如果没有传入参数，那么这个函数就作为一个getter方法，同时返回当前设置的白名单数组。
+        如果传入了白名单参数， resourceUrlWhitelist就会使用新的数组替换原来的数组。
+        每个数组元素必须是一个正则表达式或者是字符串'self'。当设置为'self'时， Angular会
+        确保所有的URL都只匹配与应用所在域一致的URL。使用一个正则表达式时， Angular会匹配与
+        测试资源对应的绝对URL。
+        如果这个数组为空， $sce会阻塞所有的URL。
+        使用'self'时可以在HTML文档中使用https协议的资源。
+        为了启动每个独立的URL，每个域都要加入白名单：
+        angular.module('myApp', [])
+        .config(['$sceDelegateProvider',
+        function($sceDelegateProvider) {
+        // 设置新的白名单
+        $sceDelegateProvider.resourceUrlWhitelist(['.*']);
+        }]);
+        默认情况下，白名单被设置为['self']。
+        <hr />
+
+    29.3 URL 黑名单
+              也可以使用黑名单URL替换白名单。它通常比依靠白名单更安全，但是你可以结合使用它们。
+        对于可信任的域而言，白名单很有用；黑名单通常服务于域名重定向操作。
+             可以使用resourceUrlBlacklist()方法设置新的黑名单。这个方法也接受一个可选的参数。
+           黑名单列表（数组）。
+            如果没有传入参数，这个函数就会返回当前设置的黑名单数组。
+            如果传入了黑名单参数，新的数组就会替换原来的黑名单。
+            黑名单数组中的每个元素必须是一个正则表达式或者是字符串'self'，尽管在使用黑名单的
+        情况下，它没什么用。但是使用正则表达式时，它匹配与测试资源相对的绝对URL。
+                对于可信任的内容，黑名单总是最后才决定什么是可接受的，什么是不可接受的。
+        默认情况下，黑名单被设置为一个空数组[ ]。
+        <hr />
+
+    29.4 $sce API
+             $sce库中有两个我们会用到的主要函数，以及一系列辅助函数。
+    29.4.1 getTrusted
+        要获取一个特定类型的可信任版本的值，可以调用getTrusted()方法。
+        这个getTrusted()方法接受两个参数。
+              类型（字符串）。
+        这个字符串代表使用该值的上下文类型。对于可用类型可以查看sce类型列表。
+         maybeTrusted
+        这个值是从$sce.trustAs返回的值。如果无效，它抛出一个异常。
+        $sce库还有一些适用于getTrusted()方法的辅助方法。
+        下列方法的调用从功能上讲是等价的：
+
+        getTrustedCss(value)            getTrusted($sce.CSS, value)
+        getTrustedHtml(value)           getTrusted($sce.HTML, value)
+        getTrustedJs(value)                 getTrusted($sce.JS, value)
+        getTrustedResourceUrl(value)         getTrusted($sce.RESOURCE_URL, value)
+        getTrustedUrl(value)                 getTrusted($sce.URL, value)
+
+        29.4.2 parse
+        类似于$parse服务， parse方法用于将Angular表达式转换为函数。如果表达式是一个恒定的
+        字面量，它就调用$parse服务；否则，调用$sce.getTrusted()服务。
+        parse()方法接受两个参数。
+         类型（字符串）。
+        这个类型代表使用该值的$sce上下文类型。对于可用类型可以查看sce类型列表。
+         表达式（字符串）。
+        Angular要编译的表达式。
+        parse()方法返回一个： function(context, locals)形式的函数：
+         context（对象）。
+        这个对象表示表达式应该在哪里被求值。通常是一个$scope对象。
+         locals（对象）。
+        局部变量，在context中重写值时非常有用。
+        $sce库有一些适用于parse()方法的辅助方法。
+        下列方法的调用从功能上讲是等价的：
+        parseAsCss(expr)          parseAs($sce.CSS, expr)         
+        parseAsHtml(expr)          parseAs($sce.HTML, expr)         
+        parseAsJs(expr)          parseAs($sce.JS, expr)         
+        parseAsResourceUrl(expr)          parseAs($sce.RESOURCE_URL, expr)         
+        parseAsUrl(expr)          parseAs($sce.URL, expr)
+
+    29.4.3 trustAs
+             trustAs()方法返回一个对象， Angular信任该对象，可以在特定的严格上下文转义环境中使
+        用它。比如ng-bind-html和ng-include绑定，使用给它们提供的值。
+        这个trustAs()方法接受两个参数。
+                 类型（字符串）。
+                这个$sce上下文类型表示哪里的值是安全的。对于可用类型可以查看sce类型列表。
+                 值。
+                这个值表示我们可以用它来替代提供的值。
+         trustAs()方法返回一个值，可以用于Angular期望$sce.trustAs()返回值的地方。
+         $sce库还有一些适用于trustAs()方法的辅助方法。
+        下列方法的调用从功能上讲是等价的：
+        trustAsHtml(value)                   trustAs($sce.HTML, value)                  
+        trustAsJs(value)                   trustAs($sce.JS, value)                  
+        parseAsResourceUrl(value)                   trustAs($sce.RESOURCE_URL, value)                  
+        trustAsUrl(value)                   trustAs($sce.URL, value)                  
+    29.4.4 isEnabled
+             isEnabled()方法没有参数，同时它返回一个布尔值，该值告诉我们是否启用了sce环境。如
+        果启用了，它返回true；否则返回false。
+    29.5 配置$sce
+             如果想在运行应用时完全禁用sce子系统（虽然不鼓励这么做，默认情况下它还是提供了安
+         全性保护），可以在应用的config()函数中像这样禁用它：
+                angular.module('myApp', [])
+                config(['$sceProvider', function($sceProvider) {
+                // 关闭SCE
+                $sceProvider.enable(false);
+                }]);
+    29.6 可信赖的上下文类型
+             $sce库默认情况下支持五个内置的上下文类型。 Angular使用这些上下文类型解析和确定一
+        个上下文与另一个上下文中什么是安全的。
+
+        $sce.HTML 告诉Angular,        在应用中这是安全HTML来源
+        $sce.CSS 告诉Angular,        在应用中这是安全的CSS来源
+        $sce.URL 告诉Angular,        这个带URL的链接是安全的
+        $sce.RESOURCE_URL 告诉Angular,        这个带URL的链接是安全的，同时引入应用的内容也是安全的
+        $sce.JS 告诉Angular,        在应用程序中这是可以安全执行的内容
+        
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+
+    </h2>
+    </pre>
+
+</body>
+</html>

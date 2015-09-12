@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<pre>
+    <h2>
+        <hr />
+             大型的、互联网规模的Web应用中，限制从客户端调用API的能力使我们能够创建可伸缩 的Web应用。
+              这不仅让前端呈现更快、更具响应性，还通过减少后端工作量的方式保护了后端。这样，后
+        端就可以在前端服务于更多的用户。
+        <hr />
+
+        28.1 什么是缓存
+                一个缓存就是一个组件，它可以透明地存储数据，以便未来可以更快地服务于请求。缓存不
+        需要时常重新计算的数据是安全的，而重新获取数据会导致数据重复。
+         缓存能够服务的请求越多，整体系统性能就提升得越多。
+        传统的缓存服务器，比如Memcache，可以是为客户端内容提供服务的同一系统或者是远程
+        系统。归根结底都是在服务器容量和流量这些选项之间作出选择。
+          根据内容的易变性，我们可以将精力集中于存储那些需要长期存储的缓存内容（比如，存储
+        在磁盘中或者对于短期存储的内容就保存在内存中）。
+            缓存就像一个很大的键值存储。一个键指向一块缓存的内容。当请求这部分内容时，如果
+        在缓存中找到这个键并发现它有效（即命中缓存），那么就为这个请求提供相关内容。
+             如果没有这个键（即没找到缓存内容），那么缓存服务器就需要知道如何获取相关数据，存
+        储它，然后为原始请求返回数据。
+         本章，我们将讨论Angular中的缓存策略，包括如何为服务器端内容设置memcache（轻量级
+        的）以及使用Angular内置的缓存机制。它提供了一些很棒的库供我们使用。
+        <hr />
+
+        28.2 Angular 中的缓存
+                 Angular提供的内置缓存服务是一个很方便的特性，它让我们能够使用同一机制来缓存自定
+                义内容。
+        28.2.1 $cacheFactory 简介
+                $cacheFactory是一个为所有Angular服务生成缓存对象的服务。在内部， $cacheFactory会
+         创建一个默认的缓存对象，即使我们并没有显示地创建。
+            要创建一个缓存对象，可以使用$cacheFactory通过一个ID创建一个缓存：
+                var cache = $cacheFactory('myCache');
+                 这里，定义了一个ID为myCache的缓存。这个$cacheFactory方法可以接受两个参数：
+                cacheId（字符串）：这个cacheId就是创建缓存时的ID名称。可以通过get()方法使用缓存
+        名称来引用它。
+                options（对象）：这个选项用于指定缓存如何表现。一般情况下，这个选项对象是一个键：
+                 capacity （数字）
+         这个容量描述了在任何给定时间要使用缓存存储并保存的缓存键值对的最大数量。
+        $cacheFactory()方法返回一个缓存对象。
+
+        <hr />
+
+    28.2.2 缓存对象
+        缓存对象自身有下列这些方法可以用来与缓存交互。
+        info()： info()方法返回缓存对象的ID、尺寸和选项。
+        put()： put()方法允许我们把任意JavaScript对象值形式的键（字符串）放进缓存中。
+        cache.put("hello","world");
+        put()方法会返回我们放入缓存中的值。
+        get()： get()方法让我们能够访问一个键对应的缓存值。如果找到了这个键，它会返回它的
+        值；如果没有找到，它会返回undefined。
+        cache.get("hello");
+        remove()： remove()函数用于在找到一个键值对的情况下从缓存中移除它。如果没有找到，
+        它就会返回undefined。
+        cache.remove("hello");
+        removeAll()： removeAll()函数用于重置缓存，同时移除所有已缓存的值。
+        destory()： destory()方法用于从$cacheFactory缓存注册表中移除指定缓存的所有引用。
+        <hr />
+
+    28.3 $http 中的缓存
+        Angular的$http服务创建了一个带有ID为$http的缓存。（很意外，对吗？）要让$http请求
+        使用默认的缓存对象很简单： $http()方法允许我们给它传递一个cache参数。
+    28.3.1 默认的$http缓存
+        当数据不会经常改变时，默认的$http缓存就特别有用了。可以像这样设置它：
+
+        $http({
+                method: 'GET',
+                url: '/api/users.json',
+                cache: true
+        });
+        // 或者使用辅助方法.get()
+        $http.get('/api/user.json', {
+              cache: true
+        });
+                 现在，通过$http到URL/api/user.json的每个请求将会存储到默认的$http缓存中。这个
+        $http缓存中的请求键就是完整的URL路径。
+             通过在$http选项中传入参数true，可以告诉$http服务使用默认的缓存。如果我们不想经
+        常干扰那些缓存，使用默认缓存是很有用的。
+             然而，如果需要，也可以操作这个默认的$http缓存（比如，如果我们发起的另外一个没有
+        缓存的请求提醒我们发生了增量变化，我们就可以在默认的$http请求中清除这个请求）。
+              为了引用$http的默认请求，只需通过$cacheFactory()使用ID来获取到该缓存：
+                var cache = $cacheFactory('$http');
+              对于所掌控的缓存，我们可以在需要时进行所有的正常操作，比如检索已缓存的响应，从缓
+        存中清除条目，或者消除所有缓存的引用。
+            // 获取上一次请求的缓存
+            var usersCache = cache.get('http://example.com/api.users.json');
+            // 删除上一次请求的缓存入口
+            cache.remove('http://example.com/api.users.json');
+            // 重新开始并移除全部缓存
+            cache.removeAll();
+             尽管可以引用默认缓存，但是有时候能够对缓存有更多的控制以及针对缓存的表现创建规则
+        可能更有用。这就需要创建一个新的缓存来使用$http请求。
+
+        <hr />
+
+        28.3.2 自定义缓存
+                  通过自定义的缓存来让$http请求发起请求很简单。可以采用传递缓存实例的方式，而不必
+        传递一个布尔参数true给请求。
+                 var myCache = $cacheFactory('myCache');
+                $http({
+                        method: 'GET',
+                        utl: '/api/users.json',
+                        cache: myCache
+                });
+                // 或者使用辅助方法.get()
+                $http.get('/api/users.json', {
+                        cache: myCahe
+                    });
+        现在， $http将会使用自定义的缓存而非默认缓存。
+        <hr />
+        28.4 为$http 设置默认缓存
+             尽管这很容易，但是每次我们想要发起一个$http请求时都要给它传递一个缓存实例并不方
+        便，特别是对每个请求使用同一缓存的时候。
+                    其实可以在模块的.config()方法中通过$httpProvider设置$http默认使用的缓存对象。
+        angular.module('myApp', []).config(function($httpProvider) {
+             $httpProvider.defaults.cache = $cacheFactory('myCache', {capacity: 20});
+        });
+              这个$http服务不再使用它为我们创建的默认缓存；它会使用我们自定义的缓存，实际上这
+        就是一个近期缓存最久未使用算法①（Least Recently Used， LRU）。
+             LRU缓存根据缓存容量只保留最新的缓存数目。也就是说，我们的缓存容量为20，
+        因此会缓存前20个请求，但是进入第21个请求时，最近最少使用的请求条目就会从缓存
+        中被删除。这个缓存自身会负责具体哪些要维护，哪些要移除。
+        LRU是一种高速缓存算法。基于这个算法丢弃最近最少使用的缓存。参考：维基百科： LRU（en.wikipedia.org/wiki/
+        Least_Recently_Used#LRU）。 ——译者注
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+        <hr />
+
+    </h2>
+    </pre>
+
+</body>
+</html>

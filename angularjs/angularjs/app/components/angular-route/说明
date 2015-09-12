@@ -1,0 +1,5 @@
+多重视图和路由多重视图和路由
+1.2版本开始， AngularJS将ngRoutes从核心代码中剥离出来成为独立的模块。我们需要安
+装并引用它，才能够在AngularJS应用中正常地使用路由功能。
+可以从code.angularjs.org下载它，然后保存到一个可以在HTML页面中进行引用的位置，例
+如js/vendor/angular-route.js。
