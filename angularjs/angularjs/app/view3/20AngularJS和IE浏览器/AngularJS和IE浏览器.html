@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+<pre>
+    <h2>
+
+        最新版本的Angular（1.3.0） ①减少了对IE8的支持。本章是本书特意为1.2.x版留下的。
+        AngularJS可以无缝地运行在大多数现代浏览器中，在Safari、 Google Chrome、 Google Chrome
+        Canary以及FireFox中都可以很好地工作，但在臭名昭著的IE8以及更低版本中则可能会有些
+        问题。
+        欲了解更多信息，请阅读AngularJS文档中的IE使用指南②。
+        如果你计划为IE8及更低版本的IE浏览器发布应用程序，则需要额外注意一下，以便支持它们。
+        IE浏览器不希望元素名以ng开头：因为它会认为这个前缀是一个XML命名空间。 IE浏览器会
+        忽略这些元素，除非这些元素有一个正确的命名空间声明：
+        &lt;html xmlns:my="ignored">
+        这个xmlns:ng="http://angularjs.org"会让IE更好地工作。
+        如果希望IE能够识别非标准的HTML标签，需要在文档头部创建好这些标签。在文档head中
+        可以这样做。
+        &lt;!doctype html>
+        &lt;html xmlns:ng="http://angularjs.org">
+        &lt;head>
+            &lt;!--[if lte IE 8]
+            &lt;script>
+            document.createElement('ng-view');
+            // 其他自定义元素
+            &lt;/script>
+            &lt;![endif]-->
+        &lt;/head>
+        &lt;body>
+        &lt;!-- ... -->
+        推荐使用属性（attribute）形式的指令，这样就无需创建自定义元素来支持IE：
+        &lt;div data-ng-view>&lt;/div>
+        ——————————
+        ① 本书出版时， Angular 1.3还处于beta版阶段，最新版仍为1.2.x。——译者注
+        ② http://docs.angularjs.org/guide/ie
+        第 30 章
+        图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+        392 第 30 章 AngularJS 和 IE 浏览器
+        为了让AngularJS能在IE7及更早版本中工作，还需要一个JSON.stringify polyfill①。可以使用
+        JSON3②或者JSON2③实现。
+        我们需要根据浏览器的类型来引入这个文件。首先需要下载这个文件，将它存储在应用程序
+        的某个地方，最后在头部引用它，就像这样：
+        &lt;!doctype html>
+        &lt;html xmlns:ng="http://angularjs.org">
+        &lt;head>
+            &lt;!--[if lte IE 8]
+            &lt;script src="lib/json2.js">&lt;/script>
+            &lt;![endif]-->
+        &lt;/head>
+        &lt;body>
+        &lt;!-- ... -->
+        此外，为了在IE中使用ng-app指令，还要设置元素的id为ng-app。
+        &lt;body id="ng-app" ng-app="myApp">
+        &lt;!-- ... -->
+        还可以利用angular-ui-utils库的ie-shiv模块帮助我们在DOM中提供自定义元素。
+        为了使用ui-utils的ie-shiv库，需要确保安装了angular-ui库。如果下载了ui-utils库，
+        同时引入了这个模块，那么安装起来就很容易了。可以在Github上的https://github.com/angularui/ui-utils④中找到这个ui-utils。
+        先来确保在应用可访问的位置包含了ui-utils模块，然后像这样引入这个文件：
+        &lt;!--[if lte IE 8]>
+        &lt;script type="text/javascript">
+            // 在这里定义自定义指令
+        &lt;/script>
+        &lt;script src="lib/angular-ui-ieshiv.js">&lt;/script>
+        &lt;![endif]-->
+        在这里，我们仅仅在IE8及更早版本的IE中激活了ie-shiv。这个shiv允许我们在全局作用域
+        上添加自定义指令，它会为IE创建适当的声明。
+        这个shiv库会查找window.myCustomTags对象。如果定义了window.myCustonTags，这个库
+        会在加载时引入这些标签，同时一同引入其余的Angular库指令：
+        &lt;!--[if lte IE 8]>
+        &lt;script type="text/javascript">
+            // 在这里定义自定义指令
+            window.myCustomTags = ['myDirective'];
+        &lt;/script>
+        &lt;script src="lib/angular-ui-ieshiv.js">&lt;/script>
+        &lt;![endif]-->
+        ——————————
+        ① polyfill用来添加一些原生功能支持的功能。更多信息可以参考“ [译]shim和polyfill有什么区别”（www.cnblogs.com/
+        ziyunfei/archive/2012/09/17/268829.html）和“ HTML5逸事：一袋‘腻子粉’的故事（待续）”（www.ituring.com.cn/
+        article/766）。 ——译者注
+        ② http://bestiejs.github.io/json3/
+        ③ https://github.com/douglascrockford/JSON-js
+        ④ https://github.com/angular-ui/ui-utils
+        图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+        30.4 服务端 393
+
+        30.1 Ajax 缓存
+        常见的浏览器里， IE是唯一缓存XHR请求的。为了避免这一缺陷，可以在HTTP响应头中设
+        置Cache-Control值为no-cache。
+        这是现代浏览器的默认行为，使用它可以为IE用户提供更好的体验。
+        可以像这样修改每个请求的默认HTTP头：
+        .config(function($httpProvider) {
+        $httpProvider.defaults.headers.common['Cache-Control'] = 'no-cache';
+        });
+        30.2 AngularJS 中的 SEO
+        诸如Google和Bing这样的搜索引擎，都抓取静态Web页面，而非含有大量JavaScript的客户端
+        应用。搜索引擎机器人通常都快速、高效地抓取数据，因此大多数情况下在抓取页面时不会渲染
+        JavaScript。
+        这是因为这些JavaScript应用都需要一个JavaScript引擎来解释它，例如PhantomJS或者v8。
+        Web爬虫程序通常在加载Web页面时并不会使用JavaScript解释器。
+        在搜索引擎中不包含JS解释器有充分的理由：因为它们不需要，这样做只会在抓取
+        Web页面时更慢、更低效。
+        30.3 使 Angular 应用可被索引
+        有几种不同的方式可以让Google处理应用索引。一个常见的做法是使用后端程序为你的
+        Angular应用提供服务。这种方法的优点是实现简单，不会有太多重复的代码。
+        第二种做法是在JavaScript中的
+        &lt;noscript>标签内渲染所有由Angular应用交付的内容。稍后
+            会简单讨论这一主题，因为实现
+            &lt;noscript>方法时很大程度上取决于如何交付应用。例如，可
+                以在服务端渲染页面时使用
+                &lt;noscript>。
+                    30.4 服务端
+                    Google和其他高级搜索引擎都支持hashbang格式的URL，我们可以用它来识别当前要访问的
+                    页面。搜索引擎会将这个URL转换为一个自定义的URL格式，以便服务器可以访问它们。
+                    搜索引擎访问这个URL，并期待获取到浏览器将要接收的HTML （完全渲染过的HTML内容）。
+                    例如， Google会把hashbang格式的URL：
+                    http://www.ng-newsletter.com/#!/signup/page
+                    转变为URL：
+                    http://www.ng-newsletter.com/?+escaped_fragment_=/signup/page
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    394 第 30 章 AngularJS 和 IE 浏览器
+                    在我们的Angular应用中，需要根据我们所使用的URL风格让Google以不同的方式处理应用
+                    站点。
+                    30.4.1 hashbang语法
+                    Google最初编写Ajax采集规范就是为了使用hashbang语法传送URL，这是一个为JS应用程序
+                    创建永久链接的原始方法。
+                    这需要在应用路由中使用hashPrefix（默认的）配置我们的应用：
+                    angular.module('myApp', [])
+                    .configure(['$location', function($location) {
+                    $location.hashPrefix('!');
+                    }]);
+                    30.4.2 HTML5 路由模式
+                    新的HTML5 pushState并不以相同的方式工作：它会修改浏览器的URL和历史记录。为了让
+                    Angular应用“欺骗”搜索机器人，可以在header中添加一个简单的元素：
+                    &lt;meta name="fragment" content="!">
+                    这个元素会让Google蜘蛛使用新的爬行规范来抓取你的站点。当它遇到这个标签时，它会使
+                    用?_escaped_fragment=标签重新访问站点，而不是采用标准的抓取站点的方式。
+                    假设要在$location服务中使用HTML5模式，可以像这样设置页面以使用httml5Mode：
+                    angular.module('myApp', [])
+                    .configure(['$routeProvider', function($routeProvider) {
+                    $routeProvider.html5Mode(true);
+                    }]);
+                    查询字符串中有了_escaped_fragment_后，我们可以让后端服务器提供静态的HTML而不是
+                    客户端应用。
+                    现在，后端服务器可以检测请求中是否包含_escaped_fragment_字段，如果包含，我们将
+                    提供静态HTML而不是纯Angular应用。
+                    还可以使用代理实现这个功能，比如Apache或者Nginx，或者是一个后端服务。
+                    如何设置超出了本书的范畴，然而，我们会使用一个NodeJS应用来讨论如何设
+                    置它们。
+                    30.5 服务端处理 SEO 的选项
+                    有许多选项可以使我们的站点更好地支持搜索引擎优化（Search Engine Optimization， SEO）。
+                    我们将会使用三种不同的方式演示如何从服务器端交付应用：
+                     使用Node/Express中间件；
+                     使用Apache重写URL；
+                     使用Ngnix代理URL。
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    30.5 服务端处理 SEO 的选项 395
+
+                    30.5.1 使用Node/Express中间件
+                    尽管在这个例子中我们使用的是NodeJS，但这一实现只是使用后端提供静态
+                    HTML的一种方式。无论你使用什么样的后端，这一方案都是可行的。
+                    为了使用NodeJS和Express（基于NodeJS的Web应用程序框架）交付静态HTML，我们必须添
+                    加一些用来在查询参数中查找_escaped_fragment_的中间件：
+                    // 在你的app.js配置中共享创意
+                    app.use(function(req, res, next) {
+                    var fragment = req.query._escaped_fragment_;
+                    if(!fragment) return next();
+                    // 如果fragment为空，则服务于首页
+                    if(fragment === "" || fragment === "/")
+                    fragment = "/index.html";
+                    // 如果fragment不是以'/'开始的，则将'/'前置插入fragment
+                    if(fragment.charAt(0) !== "/")
+                    fragment = '/' + fragment;
+                    // 如果fragment不是以'.html'结尾的，则将它插入fragment中
+                    if(fragment.indexOf('.html') == -1)
+                    fragment += ".html";
+                    // 服务于静态html快照
+                    try {
+                    var file = __dirname + "/snapshots" + fragment;
+                    res.sendfile(file);
+                    } catch (err) {
+                    res.send(404);
+                    }
+                    });
+                    这个中间件认为我们的快照存放在叫做“ /snapshots”的顶级目录中，然后会基于请求路径为
+                    文件提供服务。
+                    例如，当请求/时，它会提供index.html；当请求为/about时，它会提供snapshots目录中的
+                    about.html。
+                    30.5.2 使用Apache重写URL
+                    如果使用Apache服务器①交付Angular应用，那么可以添加几行代码到配置中，用来提供快照
+                    服务而不是JavaScript应用。
+                    可以使用mod_rewrite模块来检测路由请求中是否包含_escaped_fragment_查询参数。如果
+                    确实包含，它会重写请求，以指向/snapshots目录中的静态版本的文件。
+                    要想使用重写机制，需要启用适当的模块：
+                    $ a2enmod proxy
+                    $ a2enmod proxy_http
+                    ——————————
+                    ① http://httpd.apache.org/
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    396 第 30 章 AngularJS 和 IE 浏览器
+                    然后需要重新载入Apache配置：
+                    $ sudo /etc/init.d/apache2 reload
+                    可以在站点的虚拟主机配置中，或者位于服务器根目录的.htaccess文件中设置重写规则。
+                    RewriteEngine On
+                    Options +FollowSymLinks
+                    RewriteCond %{REQUEST_URI} ^/$
+                    RewriteCond %{QUERY_STRING} ^_escaped_fragment_/?(.*)$
+                    RewriteRule ^(.*)$ /snapshots/%1? [NC,L]
+                    30.5.3 使用Ngnix代理URL
+                    如果使用Nginx①为Angular应用提供服务，并且在查询字符串中有一个_escaped_fragment_
+                    参数，那么也可以添加一些配置以便提供应用的快照。
+                    和Apache不同， Nginx无需启用什么模块，因此可以简单地更新配置来处理替换文件路径的
+                    问题。
+                    在Nginx配置文件中（比如/etc/nginx/nginx.conf），需要确保配置信息看起来像这样：
+                    server {
+                    listen: 80;
+                    server_name example;
+                    if($args ~ "_escaped_fragment_=/?(.+)") {
+                    set $path $1;
+                    rewrite ^ /snapshots/$path last;
+                    }
+                    location / {
+                    root /web/example/current/;
+                    # Comment out if using hash urls
+                    if(!-e $request_filename) {
+                    rewrite ^(.*)$ /index.html break;
+                    }
+                    index index.html;
+                    }
+                    }
+                    这一步完成之后就可以重新加载配置信息了：
+                    sudo /etc/init.d/nginx reload
+                    30.6 获取快照
+                    我们可以使用PhantomJS②或者zombie.js③等工具来渲染页面，以便提供后台应用的HTML快
+                    照。当Google使用_escaped_fragment_查询参数请求一个页面时，我们就可以简单地返回并渲
+                    染这个页面。
+                    ——————————
+                    ① http://wiki.nginx.org/Main
+                    ② http://phantomjs.org/
+                    ③ http://zombie.labnotes.org/
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    30.7 使用 Zombie.js 获取 HTML 快照 397
+
+
+                    下面我们会讨论两个获取快照的方法：使用Zombie.js和一个Grunt工具。这里不会涉及使用
+                    出色的PhantomJS①，因为已经有很多介绍它的优秀资源了。
+                    30.7 使用 Zombie.js 获取 HTML 快照
+                    要使用Zombie.js②，需要安装zombie这个npm包：
+                    $ npm install zombie
+                    现在，我们可以通过使用zombie来使用NodeJS保存文件了。首先，在这个过程中会用到一些
+                    辅助方法：
+                    var Brower = require('zombie'),
+                    url = require('url'),
+                    fs = require('fs'),
+                    saveDir = __dirname + '/snapshots';
+                    var scriptTagRegExp = /
+                    &lt;script
+                    \b[^&lt;]*(?:(?!&lt;\/script>)&lt;[^&lt;]*)*&lt;\/script>/gi;
+                    var stripScriptTags = function(html) {
+                    return html.replace(scriptTagRegexp, '');
+                    }
+                    var browserOpts = {
+                    waitFor: 2000,
+                    loadCSS: fase,
+                    runScripts: true
+                    }
+                    var saveSnapshot = function(uri, body) {
+                    var lastIdx - uri.lastIndexOf('#/');
+                    if(lastIdx &lt; 0) {
+                    // 如果使用html5mode
+                    path =
+                    url.parse(uri).pathname;
+                    } else {
+                    // 如果使用hashbang模式
+                    path = uri.substring(lastIdx + 1, uri.length);
+                    }
+                    if(path === '/') path = "/index.html";
+                    if(path.indexOf('.html') == -1)
+                    path += ".html";
+                    var filename = saveDir + path;
+                    fs.open(filename, 'w', function(e, fd) {
+                    if(e) return;
+                    fs.write(fd, body);
+                    });
+                    };
+                    现在，我们需要做的就是遍历所有页面，将每个链接从相对链接转换为绝对链接（这样爬虫
+                    才能追踪它们），然后保存生成的HTML。
+                    ——————————
+                    ① http://phantomjs.org/
+                    ② http://zombie.labnotes.org/
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    398 第 30 章 AngularJS 和 IE 浏览器
+                    上面的浏览器配置中设置了一个相对较大的waitFor。这个选项会覆盖我们所关心的90%的
+                    情况。如果想在获取一个快照时使用更精确的方式，而不是等待2秒，则需要修改Angular应用来
+                    触发一个事件，然后在Zombie浏览器中监听这个事件。
+                    由于我们希望尽可能自动化，而不想污染Angular代码，因此宁愿设置一个相对较高的超时
+                    来尝试让代码保持稳定。
+                    crawlPage()函数：
+                    var crawlPage = function(idx, arr) {
+                    // location = window.location
+                    if(idx &lt; arr.length) {
+                    var uri = arr[idx];
+                    var brower = new Brower(browerOpts);
+                    var promise = brower.visit(uri).then(function() {
+                    // 将链接转换为绝对链接，然后保存它们
+                    // 如果需要并且还没准备好就抓取它们
+                    var links = brower.queryAll('a');
+                    links.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    var absUrl = url.resolve(uri, href);
+                    link.setAttribute('href', absUrl);
+                    if(arr.indexOf(absUrl) &lt; 0) {
+                    arr.push(absUrl);
+                    }
+                    });
+                    // 保存
+                    saveSnapshot(uri, brower.html());
+                    // 在下次迭代中再次调用
+                    crawlPage(idx+1, arr);
+                    });
+                    }
+                    }
+                    现在，可以在我们的页面中调用这个方法了：
+                    crawlPage(0, ["http://localhost:9000"]);
+                    30.8 使用 grunt-html-snapshot
+                    我们推荐使用Grunt工具grunt-html-snapshot来生成快照。因为我们使用Yeoman①，所以
+                    Grunt已经存在于我们的构建过程之中，我们只需设置这个任务在发布应用之后运行即可。
+                    要安装grunt-html-snapshot，可以像这样使用npm安装它：
+                    npm install grunt-html-snapshot --save-dev
+                    如果不使用Yeoman②，就需要将这个任务作为一个Grunt任务包含到Gruntfile.js中：
+                    grunt.loadNpmTasks('grunt-html-snapshot');
+                    ——————————
+                    ① http://yeoman.io/
+                    ② http://yeoman.io/
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    30.9 Prerender.io 399
+
+
+
+
+                    34
+                    35
+                    设置好这个任务之后，可以对我们的站点做一些配置。为了设置这些配置，需要在Gruntfile.js
+                    中创建如下新配置块：
+                    htmlSnapshot: {
+                    debug: {
+                    options: {}
+                    },
+                    prod: {
+                    options: {}
+                    }
+                    }
+                    现在就可以为不同的阶段添加首选项了：
+                    htmlSnapshot: {
+                    debug: {
+                    options: {
+                    snapshotPath: 'snapshot/',
+                    sitePath: 'http://127.0.0.1:9000/',
+                    msWaitForPages: 1000,
+                    urls: [
+                    '/',
+                    '/about'
+                    ]
+                    }
+                    },
+                    prod: {
+                    options: {}
+                    }
+                    }
+                    要查看所有可用的配置选项列表，可参考如下文档： https://github.com/cburgdorf/grunt-htmlsnapshot。
+                    30.9 Prerender.io
+                    此外，我们还可以使用开源的工具，比如Prerender.io①，它包含一个在运行时渲染站点的Node
+                    服务器，和一个与后端通讯在运行时预渲染HTML的Express中间件。
+                    本质上， prerender.io接受一个URL，然后返回渲染后的HTML（不带script标签）。实质上，
+                    它会从应用中像这样调用我们部署的预渲染服务器：
+                    GET http://our-prerenderserver.com/ http://localhost:9000/#/about
+                    这个GET会返回#/about页面渲染后的内容。
+                    设置一个prerender集群实际上很容易做到。此外，我们还会展示如何将自己的预渲染服务器
+                    集成到Node应用中。 Prerender.io还可以通过一个叫做prerender_rails的gem支持Ruby on Rails，
+                    但是在这里我们不会介绍如何设置它。
+                    设置自己的服务器来运行它相当容易。只需运行npm install来安装依赖，然后通过Foreman
+                    或者Node运行以下命令就行了：
+                    ——————————
+                    ① http://prerender.io/
+                    图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+                    400 第 30 章 AngularJS 和 IE 浏览器
+                    $ npm install
+                    $ node index.js
+                    # 或者使用foreman
+                    $ foreman start
+                    prerender库还可以很方便地运行在heroku上：
+                    $ git clone http://github.com/collectiveip/prerender.git
+                    $ heroku create
+                    $ git push heroku master
+                    这里我们将渲染后的HTML存储在S3①中，因此推荐你使用内置的S3缓存。可以阅读文档②来
+                    了解如何设置这个缓存。
+                    在服务器运行之后，只需要将这个抓取程序集成到应用中就行了。在Express中，使用Node
+                    库prerender-node集成它非常容易。
+                    为了安装prerender-node，我们再次使用npm：
+                    $ npm install --save prerender-node
+                    安装好这个库之后，让Express应用使用这个中间件即可：
+                    var prerender =
+                    require('prerender-node')
+                    .set('prerenderServiceUrl',
+                    'http://our-prerenderserver.com/');
+                    app.use(prerender);
+                    就是这样！最后这个片段用于告诉Express应用，如果它察觉到爬虫请求（通过定义
+                    _escaped_fragment_或者用户代理字符串），就应该在合适的URL上为prerender服务创建一个
+                    GET请求，然后获取这个页面预渲染好的HTML。
+                    30.10
+                    &lt;noscript>方法
+                    还可以使用 &lt; noscript > 标签来渲染页面 ， 而无需使用后端服务器 。 不幸的是 ，
+        对于所有页 面都使用这个方法是非常复杂的 ， 因为需要从 &lt; noscript > 外部将页面的所有元素复制到这个标 签中
+        。 这样做会很麻烦 ， 为了保持两部分同步要做大量的工作 ， 因此我们不推荐使用这个没有构建 工具协助的方法 。
+
+        <</h2>
+    </pre>
+</body>
+</html>

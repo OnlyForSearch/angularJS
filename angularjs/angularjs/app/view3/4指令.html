@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <script src="../components/angular.js"></script>
+    <script !src="">
+        angular.module('myApp', [])
+                .run(function ($rootScope) {
+                    // 使用.run访问$rootScope
+                    $rootScope.rootProperty = 'root scope';
+                })
+                //第一个指令自定义<my-directive></my-directive>
+                //通过AngularJS模块API中的.directive()方法，我们可以通过传入一个字符
+                //串和一个函数来 注册一个新指令。其中字符串是这个指令的名字，指令名应该是驼峰命名风格的，函
+                //数应该返回 一个对象。
+                //驼峰命名风格用来将一个短语写在一个单词中，除了第一个单词外其他单词首
+                //字母大写，中间不加空格。例如， bumpy roads用驼峰风格来写应该是
+                //bumpyRoads。
+                //在我们的例子中，在HTML里使用my-directive声明指令，因此指令定义必须
+                //以myDirective为名字。
+                //directive()方法返回的对象中包含了用来定义和配置指令所需的方法和属性。
+                //  从现在起，我们把创建的这些自定义元素称作指令（用.directive()方法创建），因为事实
+                // 上声明指令并不需要创建一个新的自定义元素。
+                //  声明指令本质上是在HTML中通过元素、属性、类或注释来添加功能。
+                //
+                //
+                //
+                //
+                .directive('myDirective', function () {
+                    return {
+                        /*创建的指令中可以指定以元素（E） 、属性（A） 、类（C）或注释（M）的格式来
+                        * 调用指令：
+                        * */
+                        restrict: 'EAC',
+                        template: '<a href="http://google.com"> Click me to go to Google < / a > '
+                    };
+                });
+    </script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<h1>指令：自定义 HTML 元素和属性 </h1>
+<h4>基于我们对HTML元素的理解，指令本质上就是AngularJS扩展具有自定义功能的HTML元素 的途径。<br />
+    指令可以和其他指令或属性组合在一起使用，这种组合使用的方式叫做合成
+</h4>
+<h5>在HTML中要用内置指令ng-app标记出应用的根节点。这个指令需要以属性的形式来使用，
+    因此可以将它写到任何位置，但是写到
+    &lt;html&gt;的开始标签上是最常规的做法：</h5>
+<h3>内置指令是打包在AngularJS内部的指令。所有内置指令的命名空间都使用ng作
+    为前缀。为了防止命名空间冲突，不要在自定义指令前加ng前缀。</h3>
+<hr />
+自定义指令:<my-directive></my-directive>
+<br />
+用表达式声明指令
+<my-directive ="someExpression">
+</my-directive>
+<div my-directive="someExpression">
+</div>
+<div class="my-directive:someExpression">
+</div>
+<hr />
+<h1>当前作用域介绍</h1>
+<h4>首先快速了解一下由DOM通过内置指令ng-controller提供的作用域。这个指令的作用是在 DOM中创建一个新的子作用域：</h4>
+    <p>We can access: {{ rootProperty }}</p>
+<div ng-controller="ParentController">
+    <p>We can access: {{ rootProperty }}
+        and {{ parentProperty }}</p>
+    <div ng-controller="ChildController">
+        <p>
+            We can access:
+            {{ rootProperty }} and
+            {{ parentProperty }} and
+            {{ childProperty }}
+        </p>
+        <p>{{ fullSentenceFromChild }}</p>
+    </div>
+</div>
+</body>
+</html>

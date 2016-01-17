@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<pre>
+    <h2>
+        18.2 安装 NodeJS
+        NodeJS是一个服务器端平台，建立在Chrome JavaScript运行时上。它是一个事件驱动的非阻
+        塞、轻量级JavaScript运行时，能让我们在服务端编写JavaScript。
+        要安装NodeJS，我们可以打开nodejs.org②，点击大按钮Install。它会检测并且下载适合我们
+        平台的安装程序。
+        如果因为某些原因下载了错误的包，也没什么问题。我们可以点击Downloads
+        按钮，然后手动选择合适的包。
+        现在可以运行安装程序了，让它自然运行。安装完成后，就能在命令行运行两个包了：
+         node
+         npm
+        node是Node的二进制文件，我们用它来运行Node应用；而npm是Node包管理器，我们用它
+        ——————————
+        ① http://www.fullstack.io/edu/angular/rails
+        ② http://nodejs.org
+
+
+        8.3 安装 Express
+             我们要用一种叫做expressjs的Web应用程序框架，它会给我们一些处理HTTP的语法糖。它允 许我们只使用Web应用程序的功能，而不需要处理Node的HTTP服务器的细节。
+             它的特性很多，包括提供了一个干净的路由语法、动态的中间件和大量专门为Express创建的 开源包。此外，许多知名企业在生产中也使用它。
+        为了安装Express，我们会使用npm二进制：
+        $ npm install -g express-generator
+            我们使用-g标记来将包进行全局安装。如果不想全局安装它，可以省略它，这 样它会被安装在当前目录的node_modules/目录下。然而我们还是推荐对它进行 全局安装。
+            现在，可以用Express生成器来生成Express应用。
+        $ express myApp
+            这行代码生成了一个很基本的Express应用，它带有一套依赖项，以及一个非强制性的目录结
+        构，如图18-1所示。
+        图18-1 运行Express生成器
+            要运行我们的应用，需要用npm把基本的依赖项安装在本地。这次，我们会用它把
+             package.json中设置的依赖项安装到本地。
+        $ cd myApp && npm install –d
+        -d标志告诉npm把依赖项安装在本地。这个语法十分明确：可以丢开这个-d，
+        因为它被设置为默认将依赖项安装到本地。
+        现在，我们来运行一下这个应用，以确认一切都能按照我们设想的那样运行。只需用node
+        可执行文件把它运行一下就可以了，如图18-2所示。
+        $ node app.js
+
+            如果我们在Web浏览器中打开URL http://localhost:3000，刚生成的Express应用的默认页就会 显示出来。
+         每次我们对app.js文件作修改，都需要停止服务器并且重启。在开发过程中，这个过程太麻 烦了，所以我们建议不使用node.js，而是使用nodemon服务器。 要安装nodemon，需再次使用npm：
+        $ npm install --save-dev nodemon
+                --save-dev标记告诉npm把这个包保存在package.json中的devDependencies段 落。我们推荐使用这种做法，因为当团队有多个开发人员时，这会有所帮助： 可以确保整个团队对代码库都有正确的依赖项。
+
+        我们可以不用node app.js启动应用，而用下面的代码替换它：
+         $ nodemon app.js
+            每次对app.js文件作修改并且保存时， nodemon会自动重启Node应用。
+            该应用在app.js中启动。在app.js文件中，有两个重要的组件值得注意：提供静态文件的静态
+        路径和执行的路由（以及如何执行的）。
+            // ...
+            app.use(express.methodOverride());
+            app.use(app.router);
+            // 第一行
+            app.use(express.static(path.join(__dirname, 'public')));
+            // ...
+            app.get('/', routes.index);
+            app.get('/users', user.list);
+            // ...
+
+              第一行代码调用了express.static()，告诉Node到public/目录中查找任何匹配请求路由的
+        文件。例如，如果请求的路由是/users，它就会查找一个叫“ users”的文件。
+                 第二组代码（app.get()）匹配在public/目录中不存在静态文件的路由。
+                    要使用Angular应用，需要在生成的app.js上作两次修改：
+                    首先，我们交换express.static()和app.router行，如下所示：
+                    // ...
+                    app.use(express.methodOverride());
+                    // 把该行移至下一行上方
+                    app.use(express.static(path.join(__dirname, 'public')));
+                    app.use(app.router);
+                    // ...
+                尽管严格来说这个交换不是很有必要，但它有助于后续对HTML5Mode的支持，并且会告诉
+        Express预取我们之前应用中定义的public/目录下的文件。
+            其次，移除指向“ /”路由的一行：
+            // ...
+            // app.get('/', routes.index); // 删除这一行
+            app.get('/users', users.list);
+            // ...
+            现在可以像平常一样在public目录中写Angular应用了。
+
+        18.4 调用 API
+        本地的Node服务器现在就把应用运行起来了，所以可以调用我们自己的API，我们会在
+        Express服务器中开发这些API。
+        例如，我们开发一个应用来记录用户点击特定按钮的次数，需要写两个路由：
+            GET /hits 该路由返回我们点击按钮的总次数。
+            POST /hit 该路由对按钮的一次新点击进行记录，并且给我们返回最新的总点击数。
+            首先，我们来构建应用的index.html页面基本视图。我们会把它放在Node应用的public/中，
+        这样如果路由请求的是/或者/index.html， Express都会用这个文件来响应请求：
+
+
+        在Node应用的app.js中，需要注册两个新的路由，并且创建定义路由的功能。
+        这两个新的Node路由与我们在上面调用的服务路由相匹配：
+              // ...
+                var hits = require('./routes/hits');
+                // ...
+                app.get('/hits', hits.count);
+                app.post('/hit', hits.registerNew);
+                // ...
+        唯一剩下来的组件就是创建真正的后端，记录点击数的服务端逻辑。
+        在NodeJS中，每个请求的模块通过exports方法来暴露方法。要暴露上面提到的两个方法
+        count和registerNew，需要把它们附加到routes/hits.js文件中的exports对象上。
+        在routes/hits.js文件中，我们在内存中创建一个点击仓库来存储点击数，这样，如果重启服务
+        器的话，点击数也会被重置。
+        /*
+        * HIT service
+        */
+          var hits = 0;
+        exports.count = function(req, res){
+                res.send(200, {
+                hits: hits
+        });
+        }
+        exports.registerNew = function(req, res) {
+                hits += 1;
+                res.send(200, {
+                hits: hits
+                });
+        }
+        现在，如果启动我们的Node应用，把路由指向http://localhost:3000，就会看到已经给自己的
+        Angular应用添加了预期的功能，如图18-3所示。
+
+
+        18.5 使用 Amazon AWS 的无服务器应用
+              构建一个单页应用（SPA）的最大好处之一是能够组织静态文件，而不需要建立并运行一个
+        后端基础架构的服务。
+                   然而，我们要构建的多数应用，需要一个包含自定义数据的后端服务器的支持。有越来越多
+        的选择，能让开发人员只需关注构建前端代码，而暂时不管后端。
+               Amazon最近发布了一个选项，能让我们在浏览器中创建无服务器的Web应用： Amazon AWS
+        JavaScript SDK①。
+              Amazon的基于浏览器的（服务端的是用NodeJS） SDK能让我们安心地组织应用，并且与工
+        业级的后端服务进行交互。
+                通过使用S3来存放应用和文件，将DynamoDB用作NoSQL存储，以及其他的海量服务，将应
+        用全部存放于Amazon基础架构中现在已经成为可能。我们甚至可以从客户端安全地接受支付，
+        并且从Amazon CDN中获得所有收益。
+                基于这个发布， JavaScript SDK现在能让我们跟5种Amazon AWS服务进行交互。这五种服
+        务是：
+        18.5.1 DynamoDB
+                这个快速且完全受控的NoSQL数据库服务能让我们扩展到无限大小，自带多重复制和安全访
+        问控制。
+        18.5.2 简单通知服务（ SNS）
+             这个服务是一种快速灵活、完全受控的推送服务，能让我们把消息推送到移动设备和其他服
+        务，比如email或者甚至是Amazon自己的简单队列服务（SQS）。
+        ——————————
+        ① http://aws.amazon.com/
+
+        18.5.3 简单队列服务（ SQS， Simple Queue Service）
+             这个快速、可信赖、完全受控的队列服务能让我们以一种良好管理的方式创建巨型队列。我
+        们可以创建大型请求对象，这样可以用一个通用队列把我们的应用组件从其他组件中完全解耦。
+        18.5.4 简单存储服务（ S3）
+          这个著名的、完全受控的海量数据存储能让我们存储无限数量的大对象（上限是5T），对象
+        数量不限。我们可以使用S3从各个地方来安全地存储加密的受保护数据，甚至能使用S3来托管我
+        们的Angular应用。
+        18.5.5 安全令牌服务（ STS）
+             这个Web服务允许我们为IAM用户请求临时的受限权限认证。我们不会深入探讨STS，但是
+        它确实为创建数据之上的受限安全操作提供了一个不错的接口。
+        18.6 AWSJS + Angular
+             本节打算演示如何把应用做好，让它们迅速在AWSJS体系中运行起来。
+        要做到这一点，我们要先创建一个可以让客户上传屏幕截图的缩略图，即Gunroad①的极简版
+        本。我们可以通过集成美妙的Stripe② API来让他们出售自己的截屏。
+             对这两个服务，我们已经推荐得够多了，这个迷你演示并非要用来取代他们的服务，
+          而只是用于展示Angular和AWS API的强大。
+        为了创建我们的产品，需要做到以下几点：
+                 允许用户登录我们的服务，存储他们唯一的email；
+                 允许用户上传与他们相关的文件；
+                 允许用户点击图像，并且给这些用户一个购买这个图像的选项；
+                 接受信用卡的费用，并且直接从单页Angular应用接受款项。
+
+        ——————————
+        ① https://gumroad.com/
+        ② http://stripe.com
+    </h2>
+    </pre>
+
+</body>
+</html>

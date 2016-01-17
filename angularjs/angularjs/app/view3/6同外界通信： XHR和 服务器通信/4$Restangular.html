@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <!--页面中引用托管在jsDelivr③上的JavaScript库文件：-->
+    <script src="../../components/angular/angular.min.js"></script>
+    <script type="text/javascript"
+            src="http://cdn.jsdelivr.net/restangular/latest/restangular.js"></script>
+    <script type="text/javascript"
+            src="//cdn.jsdelivr.net/lodash/2.1.0/lodash.compat.min.js">
+    </script>
+    <!-- <script type="text/javascript"
+             src="http://cdn.jsdelivr.net/restangular/latest/restangular.min.js"></script>-->
+    <meta charset="UTF-8">
+    <script !src="">
+        //        同其他的AngularJS库一样 ， 我们需要将restangular资源当作依赖加载进应用模块对象 。
+        angular.module('myApp', ['restangular']);
+        //        完成后 ， 就可以将Restangular服务注入到AngularJS对象中 ：
+        angular.module('myApp', [])
+                .factory('UserService', ['Restangular', function (Restangular) {
+                    // 现在我们已经在UserService中访问了Restangular
+                }]);
+
+    </script>
+
+    <title></title>
+</head>
+<body>
+<pre><H2>
+    15.13 使用 Restangular
+        尽管AngularJS本身非常强大，可通过将所有的重要数据打包在应用内部而形成一个独立的
+        应用，但这样就会错过这个框架最优秀的功能之一：和外部世界通信的能力。
+        本节会深入讨论一个非常不可思议的、设计良好的库： Restangular。
+    15.14 Restangular 简介
+        Restangular是一个专门用来从外部读取数据的AngularJS服务。
+        为什么不用$http或$resource？尽管$http和$resource是AngularJS的内置服务，但这两个
+        服务在某些方面的功能是有限的。 Restangular通过完全不同的途径实现了XHR通信，并提供了良
+        好的使用体验。
+        使用Restangular能带来的所有好处在Restangular的README①文件中都有详细说明，这里我
+        们简单介绍几个。
+    1. promise
+        Restangular支持promise模式的异步调用，使用起来更符合AngularJS的习惯。可以像使用原
+        始的$http方法一样对响应进行链式操作。
+    2. promise展开
+        也可以像使用$resource服务一样使用Restangular，通过很简单的方式同时操作promise和对象。
+    3. 清晰明了
+        Restangular库几乎没有复杂或神奇的东西，无需通过猜测或研究文档就可以知道它是如何工
+        作的。
+    4. 全HTTP方法支持
+        Restangular支持所有的HTTP方法。
+    5. 忘记URL
+        $resource要求明确的指定想要拉取数据的URL， Restangular并不需要事先知道URL或提前
+        指定它们（除基础URL外）。
+    6. 资源嵌套
+        Restangular可以直接处理嵌套的资源，无需创建新的Restangular实例。
+    7. 一个实例
+       同$resource不同，使用过程中仅需要创建一个Restangular资源对象的实例。
+</H2></pre>
+
+<hr />
+<pre>
+    <h2>
+        15.16 Restangular 对象简介
+             通过Restangular有两种方式创建拉取数据的对象。可以为拉取数据的对象设置基础路由：
+             var User = Restangular.all('users');
+            这样设置Restangular服务会让所有的HTTP请求将/users路径作为根路径来拉取数据。例如，
+        调用上述对象的getList()方法会从/users拉取数据：
+         var allUsers = User.getList(); // GET /users
+        当然也可以通过单个对象来发送嵌套的请求，可以用唯一的ID来代替路由发送请求：
+            var oneUser = Restangular.one('users', 'abc123');
+        上面代码的效果是调用oneUser上的get()时向/users/abc123发送请求。
+            oneUser.get().then(function(user) {
+            // GET /users/abc123/inboxes
+            user.getList('inboxes');
+         });
+        从上面可以看出， Restangular非常聪明，知道如何根据在Restangular源对象上调用的方法来
+        构造URL。但设置拉取数据的URL是很方便的，特别是当后端不支持纯粹的RESTful API时。
+             通过向allUrl方法传入一个独立的参数来指定请求的URL：
+            // 搜索的所有URL都将使用
+            // `http://google.com/`asthebaseUrl
+            var searches = Restangular.allUrl('one', 'http://google.com/');
+            // 将发送一个请求到GET http://google.com/
+            searches.getList();
+            另外也可以通过oneURL方法针对特定的请求，设置基础URL而不是操作整个请求：
+
+            var singleSearch = Restangular.oneUrl('betaSearch', 'http://beta.google.com/1');
+            // 触发一个请求到GET http://google.com/1
+            singleSearch.get();
+
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+        15.17 使用 Restangular
+        现在我们已经可以操作Restangular对象了，下面我们来用它发送请求吧。
+        当Restangular将初始化的对象返回给我们后，可以通过几种不同的方法与后端API进行交互。
+        假设我们创建了一个Restangular对象代表公共讨论列表：
+        var messages = Restangular.all('messages');
+             通过这个对象，可以使用getList()来获取所有信息。 getList()方法返回了一个集合，其
+        中包含了可以用来操作特定集合的方法。
+          // 所有消息都是一个将被resolve成所有消息列表的promise
+           var allMessages = messages.getList();
+         同样可以使用Restangular对象来创建信息。使用post()方法来创建message对象。
+          post方法可以接受一个必要参数，参数类型是对象，并向指定的URL发送一个POST请求。
+        我们也可以向请求中添加查询参数和头。
+        // POST到/messages
+        var newMessage = {
+              body: 'Hello world'
+        };
+        messages.post(newMessage);
+        // 或者我们将在一个元素上调用这个函数
+        // 以创建嵌套的资源
+        var message = Restangular.one('messages', 'abc123'); message.post('replies', newMessage);
+               由于Restangular返回promise对象，我们可以调用promise对象上的方法，因此我们可以在
+        promise对象完成时运行函数。
+
+
+            Restangular返回的是增强过的promise对象，因此除了可以调用then方法，还可以调用一些特
+        殊的方法，比如$object。 $object会立即返回一个空数组（或对象），在服务器返回信息后，数
+        组会被用新的数据填充。这对更新一个集合后，在作用域中立即重新拉取集合的场景很有用：
+                // 然后在promise中调用
+                messages.post(newMessage).then(function(newMsg){
+                         // 首先将消息设置成空数组
+                           // 然后一旦getList是完整的就填充它
+                $scope.messages = messages.getList().$object;
+                }, function(errorReason)
+                        // 出现了一个错误
+                });
+            我们也可以从集合中移除一个对象。使用remove()方法可以发送一个DELETE HTTP请求给
+        后端。通过调用集合中一个对象（或元素）的remove()方法来发送删除请求。
+            var message = messages.get(123);
+            message.remove(); // 发送DELETE HTTP请求
+          更新和储存对象是常见的操作。通常情况下，这种操作由HTTP PUT方法完成。 Restangular
+        通过put()方法来支持这个功能。
+                要更新一个对象，首先要查询这个对象，然后在实例中设置新的属性值，再调用对象的put()
+        方法将更新保存到后端。
+                注意，在修改一个对象之前对其进行复制，然后对复制的对象进行修改和保存是一
+        个好做法。 Restangular有自己的复制版本，因此无需对一系列方法重新进行绑定。在更
+        新对象时使用Restangular.copy()是一个比较好的实践。
+                现在我们已经了解了如何操作集合中的实例，下面详细介绍嵌套资源。嵌套资源是指包含在
+        其他组件内部的组件。例如，一个特定作者所写过的所有书籍。
+              Restangular默认支持嵌套资源。事实上，我们可以从集合中查询出特定的嵌套资源实例。
+                var author = Restangular.one('authors', 'abc123');
+                // 构建一个GET到/authors/abc123/books的请求
+                var books = author.getList('books');
+              Restangular中另外一个酷炫的功能是不仅可以在one和all方法创造的对象上调用post、 put、
+        getList等方法，也可以在服务器返回的对象上调用。例如，我们可以在代码中首先拉取一个作
+        者并进行展示，然后获取他的书籍列表：
+         Restangular.one('authors', 'abc123').then(function(author) {
+             $scope.author = author;
+        });
+        // 然后在代码中将
+        // 构建一个GET到/authors/abc123/authors的请求
+        // 使用$scope.author，它是从服务器返回的真实对象
+        $scope.author.getList('books');
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+        15.17.1 我的HTTP方法们怎么办
+        Restangular支持所有的HTTP方法。它支持GET、 PUT、 POST、 DELETE、 HEAD、 TRACE、
+        OPTIONS和PATCH。
+            author.get(); // GET/authors/abc123
+            author.getList('books');// GET/authors/abc123/books
+            author.put(); // PUT/authors/abc123
+            author.post(); // POST/authors/abc123
+            author.remove(); // DELETE/authors/abc123
+            author.head(); // HEAD/authors/abc123
+            author.trace(); // TRACE/authors/abc123
+            author.options(); // OPTIONS/authors/abc123
+            author.patch(); // PATCH/author/abc123
+        如果后端服务器映射资源的方式和我们预期的不符， Restangular也支持自定义HTTP方法。
+        例如，如果我们想得到作者的传记（不是RESTful资源），可以使用customMETHOD()函数设
+        置URL（METHOD可以被下面的方法替代： GET、 GETLIST、 DELETE、 POST、 PUT、 HEAD、
+        OPTIONS、 PATCH、 TRACE）：
+            // 映射一个GET到/users/abc123/biography的请求
+            author.customGET("biography");
+            // 或者带有一个新bio对象的POST
+            // as {body: "Ari's bio"}
+            // 中间的两空字段是
+            // 参数字段或任意自定义头部
+            author.customPOST({body: 'Ari\'s Bio'},// post body
+                "biography", // 路由
+                {}, // 自定义参数
+                {}); // 自定义头部
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+        15.17.2 自定义查询参数和头
+             每一个HTTP方法都可以自定义查询参数和头。
+              为了添加自定义查询参数，需要添加一个JavaScript对象，将其作为第二个参数添加到我们的
+        方法调用中，还可以再添加一个JavaScript对象作为第三个参数。最重要的是，在资源上调用这些
+        方法会将这两个参数作为可选参数。
+             使用了自定义查询参数，一个post方法看起来像这样：
+                var queryParamObj = { role: 'admin' },
+                     headerObj = { 'x-user': 'admin' };
+                messages.getList('accounts', queryParamObj, headerObj);
+                    Restangular使用起来难以置信地方便，因此我们可以集中精力在构建应用上，而不需要和这
+                些API较劲。
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+        15.18 设置 Restangular
+                Restangular具有高度的可定制性，可以根据应用的需要进行相应的设置。每个属性都有默认
+        值，所以我们也无需在不必要的情况下对其进行设置。
+             Restangular可以在几个不同的地方进行设置，比如全局或自定义服务中。
+              将RestangularProvider注入到config()函数中，或者将Restangular注入到一个run()函
+        数中，用这些方式对Restangular进行设置，无论在哪里使用Restangular都可以利用这些设置。
+                 一个决定在何处设置Restangular实例的好方法：如果设置Restangular时需要用到其
+        他服务，那么就在run()方法中设置，否则就在config()中进行设置。
+        1. 设置 baseUrl
+                通过setBaseUrl()方法给所有后端 API 请求设置 baseUrl。例如，如果 API 的地址是
+           /api/vi 而不是服务器的根路径，可以进行如下设置：
+                angular.module('myApp', ['restangular'])
+                      .config(function(RestangularProvider) {
+                          RestangularProvider.setBaseUrl('/api/v1');
+                });
+        <hr />
+
+        2. 添加元素转换
+             Restangular加载了资源之后，我们可以添加资源转换器。
+                使用elementTransformers可以在Restangular对象被加载后为其添加自定义方法。
+                 这个方法会在资源被加载后当作回调函数调用，在AngularJS对象中使用这些资源前可以对
+        资源对象进行更新或修改。
+                angular.module('myApp', ['restangular'])
+                .config(function(RestangularProvider) {
+                        // 3个参数：
+                        // route
+                        // 如果它是一个集合——布尔值（ true/false）或者
+                        // 如果你需要这两个选项以及变换器
+                        // 则不发送
+                RestangularProvider.addElementTransformer('authors', false, function(element) {
+                        element.fetchedAt = new Date();
+                        return element;
+                      });
+                });
+        对于扩展数据模型或集合有跨界方法可以使用。例如，如果我们只想更新authors资源，可
+        以用如下方法：
+        angular.module('myApp', ['restangular'])
+        .config(function(RestangularProvider) {
+                // 3个参数：
+                // route
+                // 如果它是一个集合——布尔值（ true/false）或者
+                // 如果你需要这两个选项以及变换器
+                // 则不发送
+                RestangularProvider.extendModel('authors', function(element) {
+                        element.getFullName = function() {
+                             return element.name + ' ' + element.lastName;
+                        };
+                        return element;
+                });
+        });
+        <hr />
+        3. 设置responseInterceptors
+             Restangular可以设置响应拦截器。responseInterceptors在需要对服务器返回的响应进行转
+        换时非常有用。例如，如果服务器返回的数据将我们需要的数据藏在了嵌套资源中，可以用
+        responseInterceptors把这些数据挖出来。
+
+        ****getList方法始终返回数组是非常重要的，如果响应中包含带有元信息和嵌套数
+        组的对象，我们应该用responseInterceptors把它解析出来。
+
+        responseInterceptors在每个响应从服务器返回时被调用。调用时会传入以下参数。
+                 data：从服务器取回的数据。
+                 operation：使用的HTTP方法。
+                 what：所请求的数据模型。
+                 url：请求的相对URL。
+                 response：完整的服务器响应，包括响应头。
+                 deferred：请求的promise对象。
+
+        例如，下面的设置会使getList()返回一个带有元信息的数组，在这种情况下，数组中的元
+        素就是同路由具有相同名称的属性的值。例如，向/customers发送GET请求会返回一个像
+        {customers: []}这样的数组。
+                angular.module('myApp', ['restangular'])
+                    .config(function(RestangularProvider) {
+                        RestangularProvider.setResponseInterceptor(function(data, operation, what) {
+                            if (operation == 'getList') {
+                                var list = data[what];
+                                list.metadata = data.metadata;
+                                return list;
+                            }
+                            return data;
+                    });
+        });
+        <hr />
+        4. 使用requestInterceptors
+              Restangular同样还支持另外一种对应的操作：我们可以在将数据实际发送给服务器之前对其
+        进行操作。
+             如果要在将对象发送给服务器之前对其进行操作，那么requestInterceptors非常有用。例
+        如，我们可以直接用_id字段同MongoDB进行通信，所以在使用PUT操作将其发送回服务器之前
+        需要把这个字段移除。
+                    小提示： 我们可以同时使用requestInterceptors和responseInterceptors来实现全页面
+        范围内的加载提示。在每个请求之前开始加载提示，在收到请求后停止加载提示。
+                使用setRequestInterceptor()来设置requestInterceptor。这个方法可以接受下面四个
+        参数。
+             element： 发送给服务器的资源；
+             operation：所使用的HTTP方法；
+             what：所请求的数据模型；
+             url：所请求的相对URL。
+            angular.module('myApp', ['restangular'])
+                .config(function(RestangularProvider) {
+                    RestangularProvider.setRequestInterceptor(function(elem, operation, what) {
+                        if (operation === 'put') {
+                                elem._id = undefined;
+                                return elem;
+                            }
+                              return elem;
+                    });
+            });
+
+        <hr />
+        5. 自定义字段
+             Restangular支持自定义字段，这对与非服务器通信非常有用，例如，同MongoDB数据库进行通
+        信，在这种场景中id字段不会映射到真的id上，在MongoDB中id字段实际上会映射到_id.$oid上。
+        angular.module('myApp', ['restangular'])
+            .config(function(RestangularProvider) {
+                RestangularProvider.setRestangularFields({
+                     id: '_id.$oid'
+                });
+        });
+        <hr />
+        6. 通过errorInterceptors来捕获错误
+        通过设置错误拦截器可以捕获Restangular内的错误。通过errorInterceptor可以将错误信息
+        在应用中进行传递。
+        如果errorInterceptor返回false， promise链就会被中断，并且我们的应用永远都不需要处
+        理错误。
+        例如，此时是处理验证失败的好时机。任何请求如果返回了401，可以通过errorInterceptor
+        将其捕获并将用户重定向到登录页面。
+        angular.module('myApp', ['restangular'])
+                .config(function(RestangularProvider) {
+                    RestangularProvider.setErrorInterceptor(function(resp) {
+                        displayError();
+                        return false; // 停止promise链
+                });
+        });
+        <hr />
+        7. 孤立资源设置
+                如果我们想加载一个没有嵌套在其他资源中的资源，可以使用setParentless设置告诉
+        Restangular不要构造嵌套结构的URL。
+        angular.module('myApp', ['restangular'])
+            .config(function(RestangularProvider) {
+            RestangularProvider.setParentless(['cars']);
+        });
+
+            setParentless()设置函数可以接受两种不同类型的参数：
+         布尔型
+            如果参数值为true，所有的资源都会被当作孤立资源处理，没有任何URL会进行嵌套。
+         数组
+             只有定义在这个数组中的资源会当作孤立资源处理，数组的元素是字符串，字符串的值是资
+         源的标识。
+        <hr />
+        8. 使用超媒体
+                  在实践中，只通过一个切入点（主URL）来同后端服务器进行通信是非常好的做法，其他数
+        据模型通过链接来指向相关联的资源。
+             Restangular通过selfLink、 oneUrl和allUrl来支持这个有用的做法。
+                 首先要设置selfLink字段。同设置ID非常类似， selfLink将路径设置为数据模型的一个属
+        性，而数据模型通过链接同对应的资源相关联。这样我们可以知道应该将PUT或GET请求发送到哪
+        个URL。
+        angular.module('myApp', ['restangular'])
+                .config(function(RestangularProvider) {
+                    RestangularProvider.setRestangularFields({
+                    selfLink: 'link.href'
+                });
+        });
+         设置好后，就可以开始使用这个非常有用的功能了。
+            首先读取所有作者的列表，这也是应用的主路由。
+         $scope.authors = Restangular.all('authors').getList().$object;
+             基于前面的设置，每一个作者都对应一个指向自己的链接，同样还有一个指向该作者对应的
+        书籍的URL。可以像下面这样使用这些属性：
+
+
+        var firstAuthor = authors[0];
+        firstAuthor.name="John";
+
+        // PUT到/authors/1988-author-1
+        // url在firstAuthor.link.href中
+        firstAuthor.put();
+
+        // GET到/books/for-author/1988-author-1
+        var books = Restangular.allUrl('books', firstAuthor.books.href)
+        .getList().$object;
+        <hr />
+        9. 自定义Restangular服务
+            最后， 强烈建议将Restangular封装在一个自定义服务对象内。这样做非常有用，因为在每个
+        自定义服务中都可以对Restangular进行独立的设置。通过使用服务可以将同服务器通信的逻辑与
+        AngularJS对象解耦，并让服务直接处理通信的业务。
+
+            AngularJS对象内部的解耦同样对测试非常有帮助，因为我们在测试时模拟后端请求的返回
+        数据，而无需担心会真的向后端发送请求。
+        通过将Restangular服务注入到工厂函数中，就可以方便地对Restangular进行封装。在工
+        厂函数内部，使用withConfig()函数来创建自定义设置。
+        例如：
+        angular.module('myApp', ['restangular'])
+            .factory('MessageService', ['Restangular', function(Restangular) {
+                var restAngular = Restangular.withConfig(function(Configurer) {
+                             Configurer.setBaseUrl('/api/v2/messages');
+                    });
+                    var _messageService = restAngular.all('messages');
+                    return {
+                    getMessages: function() {
+                    return _messageService.getList();
+                }
+            };
+        }]);
+
+
+    </h2>
+
+</pre>
+
+</body>
+</html>

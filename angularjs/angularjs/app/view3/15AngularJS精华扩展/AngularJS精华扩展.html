@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+<hr />
+<pre>
+    <h2>
+             最受欢迎、支持最好的AngularJS插件之一是AngularUI框架。
+        25.1 AngularUI
+                 AngularJS自带了很多方便的特性，你可以用它来构建富有表现力的AngularJS应用而无需依
+        赖额外的库。然而非常活跃的AngularJS社区还构建了很多可以用来最大限度地提升应用能力的
+        优秀的库。
+             本章，我们介绍AngularUI①库所提供的几种不同的常用组件。
+        目前AngularUI库已经被分割为一系列模块，所以你可以选择感兴趣的组件，而不必使用整
+        个套件。
+        在我们介绍这些不同的组件时，首先需要确保安装了我们要用的每个组件。
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+        25.2 安装
+             对于每个组件，你可以下载单独的JavaScript库，然后将它放置在应用程序路径中；你也可以
+        使用Bower②来完成安装工作。在ng-newsletter.com③上我们建议使用Bower。本章我们将只会使用
+        Bower安装每个模块。
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+
+        25.3 ui-router
+                AngularUI库提供的最有用的库之一便是ui-router。它是一个路由框架，允许你通过状态机
+        组织接口，而不是简单的URL路由。
+        25.3.1 安装
+        要安装ui-router库，你可以下载发布版本④的文件或者使用Bower安装。
+        ——————————
+        ① http://angular-ui.github.io/
+        ② http://angular-ui.github.io/
+        ③ http://ng-newsletter.com/
+        ④ http://angular-ui.github.io/ui-router/release/angular-ui-router.js
+
+        要确保你已经全局安装了Bower：
+        $ npm install bower -g
+        然后你就可以使用Bower安装angular-ui库了：
+        $ bower install angular-ui-router --save
+        你还要确保在视图中链接这个库：
+        &lt;script type ="text/javascript" src="app/bower_components/angular-ui-router/release/angular-ui-router.js">&lt;/script>
+        同时还需要将ui.router作为依赖注入到你的应用中：
+        angular.module('myApp', ['ui.router']);
+        现在，不同于内置的ngRoute服务，由于ui-router基于状态工作，而不是简单的url，因此
+        你可以将它嵌套在视图中。
+        在处理ngRoute服务时我们不再使用ng-view，而改为使用ui-view指令。
+        在ui-router内处理路由和状态时，我们主要关心的是应用程序处在哪个状态以及Web应用
+        当前处在哪个路由位置。
+        &lt;div ng-controller="DemoController">
+            &lt;div ui-view>&lt;/div>
+        &lt;/div>
+        和ngRoute一样，定义在任意给定状态内的模板都处在
+        &lt;div ui-view>&lt;/div>
+        元素内。此外，
+            每个模板都可以包含自己的ui-view。 这事实上就允许你在路由中嵌套视图。
+        为了定义路由，你可以使用.config方法，和常见的方式一样，但不是将路由设置在
+        $routeProvider上，而是将状态设置在$stateProvider上。
+            .config(function($stateProvider,$urlRouterProvider) {
+            $stateProvider
+            .state('start', {
+            url: '/start',
+            templateUrl: 'partials/start.html'
+            })
+         });
+          这一步给状态配置对象分配了一个名为start的状态。这个状态配置对象，或者说这个
+        stateConfig也有一些与路由配置对象相似的选项，让你能够配置应用程序的状态。
+              1. template、 templateUrl、 templateProvider
+            在每个视图上设置模板的方式有三种。
+             template：一个HTML内容字符串或者返回HTML的函数。
+             templateUrl：一个模板URL路径字符串或者是返回URL路径字符串的函数。
+             templateProvider：一个返回HTML内容字符串的函数。
+        例如：
+        $stateProvider.state('home',{
+                template: '&lt;h1>Hello {{ name }}&lt;/h1>'
+        });
+    2. controller
+        和ngRoute一样，你可以给已经注册好的控制器关联一个URL（使用字符串），也可以创建一
+        个控制器函数作为状态控制器。
+        如果没有定义模板（使用上述方式之一），就不会创建这个控制器。
+    3. resolve
+         我们还可以使用resolve功能解析要注入到控制器中的依赖列表。在ngRoute中， resolve选
+            项允许你在路由被真实渲染之前解析promise。在angular-route内，对于可以如何使用这个选项
+        更自由。
+         这个resolve选项就是一个对象，其中键就是要注入到控制器中的依赖名称，而其值就是待
+        解析的factories。
+         如果传入一个字符串， angular-route会尝试匹配一个现有的已注册的服务。如果传入一个
+        函数，则注入这个函数，而函数的返回值就是依赖。如果这个函数返回一个promise，它会在控
+        制器被实例化之前解析，同时其值（就像ngRoute）会注入到控制器中。
+
+        &lt;script !src="">
+            $stateProvider.state('home', {
+                resolve: {
+// 当结果不是promise时立即返回
+                    person: function () {
+                        return {
+                            name: "Ari",
+                            email: "ari@fullstack.io"
+                        }
+                    },
+// 这个函数返回一个promise，它会在控制器实例化之前解析
+                    currentDetails: function ($http) {
+                        return $http({
+                            method: 'JSONP',
+                            url: '/current_details'
+                        });
+                    },
+// 还可以在另一个解析中使用上面返回的promise
+                    facebookId: function ($http, currentDetails) {
+                        $http({
+                            method: 'GET',
+                            url: 'http://facebook.com/api/current_user',
+                            params: {
+                                email: currentDetails.data.emails[0]
+                            }
+                        });
+                    }
+                },
+                controller: function ($scope.person, currentDetails, facebookId)
+            {
+                $scope.person = person;
+            }
+            })
+            ;
+        &lt;/script>
+
+        4. url
+                url选项可以给应用程序的状态分配一个唯一的URL。这个url选项提供了与深度链接同样的
+
+                功能，它通过状态导航应用，而不是简单地通过URL导航。
+             这个选项类似于ngRoute的URL，但你可以把它当作ngRoute的升级版，稍后可以看到更多
+        信息。
+        基本路由可以像这样指定：
+                $stateProvider
+                .state('inbox', {
+                url: '/inbox',
+                template: '&lt;h1>Welcome to your inbox&lt;/h1>'
+        });
+              当用户导航到/inbox时，应用会转换到inbox状态，然后使用模板内容（&lt;h1>Welcome to your
+        inbox&lt;/h1>）填充主要的ui-view指令。
+             URL可以接受一系列不同的选项，它还可以在url中设置基本的参数，就像在ngRoute中一样：
+                $stateProvider
+                .state('inbox', {
+                url: '/inbox/:inboxId',
+                template: '&lt;h1>Welcome to your inbox&lt;/h1>',
+                controller: function($scope, $stateParams) {
+                $scope.inboxId = $stateParams.inboxId;
+                }
+                });
+             应用会捕获作为URL第二个组成部分的:inboxId。例如，如果用户转换到/inbox/1，
+        $stateParams.inboxId就会变成1（因为$stateParams为{inboxId: 1}）。
+         如果你喜欢，还可以使用不同的语法：
+        url: '/inbox/{inboxId}'
+                这里路径必须与URL精确匹配。和ngRoute不同，如果用户导航到/inbox/，上面的路径能
+        够正常工作。但是，当导航导到/inbox时，上述示例配置中的状态不会被激活。
+        此外，你还可以在路径参数内使用正则表达式，因此你可以设置一个匹配路由的规则。
+        例如：
+                // 只匹配包含6个十六进制数字的inbox ID
+                url: '/inbox/{inboxId: [0-9a-fA-f]{6}}',
+                // 或者匹配每个URL中`/inbox`后面的`inboxId`（全部捕获）
+                url: '/inbox/{inboxId:.*} '
+         注意，不能在路由内使用正则捕获组，因为路由解析器将无法解析这个路由。
+            甚至还可以在路由中指定查询参数：
+            // 匹配诸如/inbox?sort=ascending形式的路由
+            url: '/inbox?sort'
+    5. 嵌套路由
+         你可以使用url参数以插入路由的方式提供嵌套路由。这让你可以在页面或者模板内有多个
+        ui-views。例如，你可以在上面的/inbox路由内嵌套独立的路由。
+
+        &lt;script !src="">
+            $stateProvider
+                    .state('inbox', {
+                        url: '/inbox/:inboxId',
+                        template: '&lt;div>&lt;h1>Welcome to your inbox&lt;/h1>\
+                                        &lt;a ui-sref="inbox.priority">Show priority&lt;/a>\
+                                        &lt;div ui-view>&lt;/div>\
+                                        &lt;/div>'
+                        controller: function ($scope, $stateParams) {
+                            $scope.inboxId = $stateParams.inboxId;
+                        }
+                    })
+                    .state('inbox.priority', {
+                        url: '/priority',
+                        template: '&lt;h2>Your priority inbox&lt;/h2>'
+                    });
+        &lt;/script>
+
+
+              第一个路由会按预期匹配（如上所示）。现在这里有了第二个路由，也就是一个匹配父路由
+        inbox之下的子路由（因为这里我们使用.语法时会将它指定为一个子路由）。
+                 /inbox/1匹配第一个状态。
+                 /inbox/1/priority匹配第二个状态。
+              使用这种语法，你可以在父路由内嵌套URL。 父视图中的ui-view会解析priority收件箱。
+        6. params
+             params选项是一个参数名数组或者是一个正则表达式数组。 不能将这个选项与url选项联合
+        使用。当状态被激活时，这些参数会被填充到$stateParams服务中。
+        7. views
+                ui-router的一个强大的特性就是可以在一个状态内设置多个命名视图。在独立的视图内，
+        你可以在独立模板中定义多个要引用的视图。
+             如果设置了views参数，那么状态的templateUrl、 template和templateProvider
+        就会被忽略。如果你想在路由中包含父模板，就需要创建一个包含模板的抽象状态。
+                比方说我们有一个视图看起来像这样：
+        &lt;div>
+            &lt;div ui-view="filters">&lt;/div>
+            &lt;div ui-view="mailbox">&lt;/div>
+            &lt;div ui-view="priority">&lt;/div>
+        &lt;/div>
+             现在，你可以创建命名视图来填充每个独立的模板。每个子视图都可以包含它自己的模板、
+        控制器和使用resolve关键字解析的数据。
+
+        &lt;script !src="">
+            $stateProvider
+                    .state('inbox', {
+                        views: {
+                            'filters': {
+                                template: '&lt;h4>Filter inbox&lt;/h4>',
+                                controller: function ($scope) {
+                                }
+                            },
+                            'mailbox': {
+                                template: 'partials/mailbox.html'
+                            },
+                            'priority': {
+                                template: '&lt;h4>Priority inbox&lt;/h4>',
+                                resolve: {
+                                    facebook: function () {
+                                        return FB.messages();
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+        &lt;/script>
+        8. abstract
+        抽象模板永远不能直接激活，但是可以设置被激活的子节点。
+        你可以使用抽象模板提供一个模板包装器来包裹多个命名视图，或者传递$scope对象给子节
+        点。你还可以使用它们来传递解析后的依赖或者自定义数据，或者在同一url下嵌套多个路由（比
+        如，所有的路由都在/adminURL之下）。
+        设置抽象模板与设置常规状态一样，区别只在于设置abstract属性：
+        &lt;script !src="">
+            $stateProvider
+                    .state('admin', {
+                        abstract: true,
+                        url: '/admin',
+                        template:;
+            &lt;
+            div
+            ui - view > &lt; / div > '
+            })
+            .state('admin.index', {
+                url: '/index',
+                template: '&lt;h3>Admin index&lt;/h3>'
+            })
+                    .state('admin.users', {
+                        url: '/users',
+                        template: '&lt;ul>...&lt;/ul>'
+                    });
+        &lt;/script>
+
+    9. onEnter、 onExit
+            Angular会在用户（分别）进入或者离开视图时调用这些回调函数。对于这两个选项，你可
+        以设置希望调用的函数。这些函数可以访问被解析的数据。
+         这些回调函数让你可以在新视图上或者进入另一个状态时触发某个行为。使用它们可以很好
+        地实现一个“你确定吗？”形式的模态视图，或者在用户进入这个状态之前要求用户登录。
+    10. data
+         你可以附加任意数据给你的状态配置对象configObject。这个选项跟resolve属性很像，但
+        是它的数据不会被注入到控制器中， promise也不会被解析。
+         当需要从父状态给子状态传递数据时，这个选项特别有用。
+
+    25.3.2 事件
+            和ngRoute服务一样， angular-route服务会在状态生命周期的不同阶段触发不同的事件。
+        在应用程序内可以通过监听$scope对象的方式附加函数给这些事件。以下所有事件都会触发
+        在$ootScope上，因此可以在任意$scope对象上监听这些事件。
+    1. 状态改变事件
+            可以使用如下方式监听这个事件：
+                $scope.$on('$stateChangeStart',
+                function(evt, toState, roParams, fromState, fromParams) {
+                // 可以阻止这一状态完成
+                evt.preventDefault();
+                });
+        这个事件可能会以如下方式触发。
+                $stateChangeStart 从一个状态开始过渡到另一个状态时触发这个事件。
+                $stateChangeSuccess 从一个状态过渡到下一个状态完成时触发这个事件。
+                $stateChangeError 当过渡期间发生错误时触发这个事件。通常，模板不能被解析或者解析
+                 promise失败时会引发错误。
+    2. 视图加载事件
+             ui-router还在视图加载阶段提供了事件。
+                    $viewContentLoading 视图开始加载时， DOM被渲染之前，触发这个事件。
+                    你可以像这样监听这个事件：
+                    $scope.$on('$viewContentLoading',
+                    function(event, viewConfig) {
+                    // 在这里可以访问所有视图配置属性
+                    // 以及一个特殊的“ targetView”属性
+                    // viewConfig.targetView
+                    });
+                   $viewContentLoaded 在视图加载完成以及DOM渲染之后触发这个事件。
+    25.3.3 $stateParams
+             在上面的例子中，我们一直用$stateParams从URL的参数中辨别出不同的参数选项。这个
+            服务展示了如何根据URL的不同组成部分处理数据。
+            例如，如果在inbox状态中有个看起来像这样的URL：
+                  url: 'inbox/:inboxId/messages/{sorted}}?from&to'
+    然后用户到达这个路由：
+                /inbox/123/messages/ascending?from=10&to=20
+    那么$stateParams对象的结果就是：
+         {inboxId: '123', sorted: 'ascending', from: 10, to: 20}
+
+
+    25.3.4 $urlRouterProvider
+             和ngRoute一样， 你可以使用路由提供程序构建规则，规定当特定的URL被激活时会发生什么。
+        创建的这些状态负责在不同的URL中激活自身，因此不一定需要$urlRouterProvider来管
+        理激活和加载状态。当你想要管理发生在状态作用域之外的行为时，它就可以派上用场了，比如
+        重定向或者身份验证。
+             你可以在模块配置函数中使用$urlRouterProvider。
+             when() when函数接受两个参数：想要匹配的入口路径和用于重定向的路径（或者是在路径
+        匹配时调用的函数）。
+             为了设置重定向，需要给when方法设置一个字符串参数。
+             例如，如果想将一个空路由重定向到/inbox：
+                    .config(function($urlRouterProvider) {
+                    $urlRouterProvider.when('', '/inbox');
+                    });
+              如果传入一个函数，它会在路径匹配时调用。这个处理程序可能返回以下三个值中的一个。
+                     falsy 这个值告诉$urlRouter该规则不匹配，同时它应该尝试找到一个不同的状态来
+                    匹配。如果想要确保用户可以正确地访问一个URL，它将很有帮助。
+                     字符串 $urlRouter会把这个字符串值当作重定向的URL。
+                     truthy or undefined 这个值让$urlRouter知道已经处理了URL。
+                        otherwise() 和ngRoute中的otherwise()方法一样，这个otherwise()方法在没有其他路
+                        由匹配时发起重定向。这个方法是创建默认URL的一种很好的方式。
+                        otherwise()方法接受一个参数：一个字符串或者函数。
+                        如果传入一个字符串，任何无效或者不匹配的路由都会重定向到字符串指定的URL。
+                        如果传入一个函数，它会在没有其他路由匹配时被调用，同时负责处理返回结果。
+                            .config(function() {
+                                    $urlRouterProvider.otherwise('/');
+                                    // 或者
+                                    $urlRouterProvider.otherwise(function($injector, $location) {
+                                    $location.path('/');
+                                    });
+                            });
+             rule() 如果想要绕过所有的URL匹配，或者想要在操作其他路由之前对路由做一些操作，
+        可以使用rule()函数。
+    使用rule()函数时必须返回一个有效路径字符串。
+      .config(function($urlRouterProvider) {
+             $rulRouterProvider.rule(function($injector, $location) {
+                 return '/index';
+                 });
+        });
+
+
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+    25.3.5 创建一个导航程序
+                为什么要使用比内置的ngRoute更强大的新路由方式？
+                当我们想要为用户创建一个注册向导的时候，就需要使用ui-router了，这是一个非常合适
+        的应用场景。
+              我们将使用ui-router创建一个快速注册服务，它包含一个控制器，用于处理注册任务。
+              首先，需要创建应用视图：
+        &lt;div ng-controller="WizardSignupController">
+            &lt;h2>Signup wizard&lt;/h2>
+
+            &lt;div ui-view>&lt;/div>
+        &lt;/div>
+        在这个视图内，我们嵌入了注册视图。接下来，在这个注册向导中还需要有三个阶段。
+                 start：在这个阶段，我们获取用户名并向其介绍注册向导。
+                 email：在这里，接受用户的邮件。
+                 finish：此时，用户完成注册过程，我们要向其展示一个完整的页面。
+               在真实的应用中， finish阶段应该将注册资料发送给服务器，同时进行真实的注册
+        操作。在这里，由于没有后端，因此暂时只显示这个视图。
+             这个注册程序依赖于wizardapp.controllers模块，我们将在其中编写包含控制器：
+                    WizardSignupController。
+                    angular.module('wizardApp', [
+                    'ui.router',
+                    'wizardapp.controllers'
+                    ]);
+        WizardSignupController简单地提供了$scope.user对象，在注册过程以及注册行为中，我
+        们都会使用这个对象。
+                    angular.module('wizardapp.controllers', [])
+                    .controller('WizardSignupController',
+                    function($scope, $state) {
+                    $scope.user = {};
+                    $scope.signup = function() {}
+                    });
+        向导程序逻辑覆盖了大部分工作。你可以将这些逻辑设置到应用的config()函数中：
+                    angular.module('wizardApp', [
+                    'ui.router', 'wizardapp.controllers'
+                    ])
+                    .config(function($stateProvider, $urlRouterProvider) {
+                    $stateProvider
+                    .state('start', {
+                    url: '/step_1',
+                    /templateUrl: 'partials/wizard/step_1.html'
+                    })
+                    .state('email', {
+                    url: '/step_2',
+                    templateUrl: 'partials/wizard/step_2.html'
+        图灵社区会员 鸟月月(dearzpfree@hotmail.com) 专享 尊重版权
+        346 第 25 章 AngularJS 精华扩展
+        })
+        .state('finish', {
+        url: '/finish',
+        templateUrl: 'partials/wizard/step_3.html'
+        });
+        });
+        设置这些选项之后，基本流程就全部完成了。现在，如果用户导航到路由/step_1，他们将
+        被定向到流程的起点。尽管整个流程也可以都发生在根URL上（即/step_1），但你可能更希望将
+        它们放在子路由中（例如/wizard/step_1）。
+        为此，只需要设置一个包装其他步骤的abstract状态就可以了。
+
+        &lt;script !src="">
+            .config(function ($stateProvider, $urlRouterProvider) {
+                $stateProvider
+                        .state('wizard', {
+                            abstract: true,
+                            url: '/wizard',
+                            template: '&lt;div>&lt;div ui-view>&lt;/div>&lt;/div>'
+                        })
+                        .state('wizard.start', {
+                            url: '/step_1',
+                            templateUrl: 'partials/wizard/step_1.html'
+                        })
+                        .state('wizard.email', {
+                            url: '/step_2',
+                            templateUrl: 'partials/wizard/step_2.html'
+                        })
+                        .state('wizard.finish', {
+                            url: '/finish',
+                            templateUrl: 'partials/wizard/step_3.html'
+                        });
+            });
+        &lt;/script>
+
+             现在，这些路由不再定义在顶级路由中了，你可以将它们（子路由）安全地嵌套在/wizard
+        URL内。
+             此外，我们还想在注册程序的尾部附加一个功能：在父控制器WizardSignupController上
+        调用signup函数。我们只需在向导程序的尾部设置一个控制器来调用$scope上的函数就行了。
+        由于整个向导程序都封装在WizardSignupController中，这就表示可以正常使用作用域嵌套作
+        用域属性。
+
+        .state('wizard.finish',{
+             url: '/finish',
+                templateUrl: 'partials/wizard/step_3.html',
+                controller: function($scope) {
+                $scope.signup();
+        }
+        });
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+        25.4 ui-utils
+             UI工具库是一个功能强大的实用工具包，它提供了大量可用于你的项目中的自定义扩展，而
+        你无需重新造轮子。
+        下面展示了ui-utils库所提供的一些值得注意的特性。
+    </h2>
+
+</pre>
+
+
+<hr />
+<pre>
+    <h2>
+    25.4.1 安装
+         $ bower install --save angular-ui-utils
+         我们需要确保在HTML模板中引入了这个库。 ui-utils库的每个组件都是作为独立模块构建
+        的，因此需要单独引入每个组件。
+    25.4.2 mask
+          当想要接受一个信用卡或者电话号码时（或者是其他任何特殊格式的信息） ，你可以提供一
+        个整洁的UI来告诉用户提供干净的信息。
+        你需要确保在HTML中引入mask.js库：
+        &lt;script type="text/javascript"
+                src="app/bower_components/angular-ui-utils/modules/mask/mask.js">&lt;/script>
+        然后将ui-mask作为依赖设置给应用：
+        angular.module('myApp',['ui.mask'])
+        现在，可以使用ui-mask指令来指定输入遮罩了。 ui-mask指令接受下列形式的格式字符串：
+         A ——任意字母；
+         9 ——任意数字；
+         * ——任意字母数字字符。
+        例如，在一个input中格式化一个信用卡号码， ui-mask指令的设置看起来可能像这样：
+        &lt;input name="ccnum" ui-mask="9999999999999999" ng-model="user.cc" placeholder="Credit card
+number" />
+                        除非所有验证都满足了，否则Angular视输入为无效，而ui-mask与此类似。
+                注意，上面这个input只支持输入遮罩匹配9999-9999-9999-9999的信用卡。稍微
+                 做点工作就可以支持其他类型的卡了。
+            同样，你可以使用字符或者任意字母数字字符格式化一个输入字段。
+
+        25.4.3 ui-event
+        和其他模块一样，需要在HTML中引入event.js库：
+        &lt;script type="text/javascript"
+                src="app/bower_components/angular-ui-utils/modules/event/event.js">&lt;/script>
+        &lt;script type="text/javascript"
+                src="app/bower_components/angular-ui-utils/modules/event/event.js">&lt;/script>
+               然后还需要将ui.event作为应用的依赖引入：
+                angular.module('myApp',['ui.event'])
+                 当想要处理AngularJS自身不支持的事件时， ui-event模块极其好用。例如，如果希望用户
+        双击某个元素或者处理一个blur事件，就必须编写一个包装函数来包装原生浏览器事件double
+        click。而ui-event模块就是一个简单的原生事件包装器，因此你可以使用它来响应任意元素上
+        由浏览器触发的事件。
+        例如，你想在用户双击另一个图像之后显示一个图像。只需设置ui-event指令为一个由事件
+        名称和该元素捕获到对应事件时要采取的行为组成的键值对即可。
+        比如，在HTML中，你可以在控制器中设置一个双击事件dbclick调用showImage()函数：
+        <imgsrc
+        ="/images/ui/ginger.png" ui-event="{dblclick:'showImage()'}" />
+        在控制器中，可以在作用域对象上像编写标准的方法一样编写对应的方法：
+        .controller('DemoController', function($scope) {
+        $scope.showImage = function() {
+        $scope.shouldShowImage = !$scope.shouldShowImage;
+        }
+        });
+        由于这个ui-event指令就是一个简单的原生浏览器事件包装器，因此你可以在任意元素上用
+        它来模拟任意浏览器事件。
+        例如，如果想捕获一个元素的blur或者focus事件，也可以使用ui-event指令。
+        比方说想针对表单输入提供一些有用的提示。你可以在focus事件和blur事件上设置相应的
+        行为来显示这些帮助提示。
+        例如，如果你有一个包含name和email输入字段的表单，可以给blur和focus事件附加一个
+        函数来在这些输入字段上显示帮助信息。
+        &lt;formname ="form">
+        &lt;input type="text" name="name" placeholder="Your name"
+               ui-event="{focus: 'showNameHelp=true',
+blur: 'showNameHelp=false'}" />
+        &lt;input type="email" name="email" placeholder="Your email"
+               ui-event="{focus: 'showEmailHelp=true',
+blur: 'showEmailHelp=false'}" />
+        &lt;/form>
+        在输入字段上设置这些事件时，还可以依据用户关注的字段来显示相应的帮助信息（使用
+        ng-show和ng-hide）。
+
+
+    25.4.4 ui-format
+        同样需要确保在HTML中引入format.js库：
+        &lt;script type="text/javascript"
+                src="app/bower_components/angular-ui-utils/modules/format/format.js">&lt;/script>
+
+        然后设置ui.format为应用的依赖：
+                  angular.module('myApp',['ui.format'])
+              format库是一个以不同方式处理字符串标记的包装器。它让你能够直接处理应用中被认为是
+        变量的标记。
+             我们可以使用这个格式化库中的标记替换功能，而不是数组或者键值对形式的JavaScript对
+        象。例如：
+        {{ "Hello$0" | format: 'Ari' }}
+             或者，也可以在作用域中将名称绑定给变量，然后使用format库以一个干净的格式呈现它。
+        比方说有一个看起来像这样的控制器：
+                angular.module('myApp', ['ui.format'])
+                .controller('FormatController', function($scope) {
+                $scope.name = 'Ari';
+                });
+        你还可以格式化输入字段以防范在$scope上绑定变量：
+        尽管这段代码并不是特别有趣（这是Angular的一项创造性的功能），但当你想要在键-值的基
+        础上操作文本时它就变得很有趣了。
+        例如，你可以基于对象的键来格式化一个字符串。比方说你有一个带有name和email属性的
+        对象：
+                .controller('FormatController', function($scope) {
+                        $scope.person = {
+                        name: 'Ari',
+                        email: 'ari@fullstack.io'
+                        };
+                });
+        接下来可以修改HTML，引入作为tokens的对象键，这允许你改变匹配标记来防范把键当作
+        tokens：
+         {{ "Hello: name. Youre mail is: email" | format: person }}
+        format模块在处理翻译或者支持i18n时特别有用（更多关于翻译的信息，请参考第27章）。
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+
+</pre>
+<hr />
+<pre>
+    <h2>
+
+    </h2>
+
+</pre>
+</body>
+</html>

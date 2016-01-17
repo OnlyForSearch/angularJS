@@ -1,0 +1,60 @@
+<!doctype html>
+<html ng-app="myApp" >
+<head >
+    <script src="../components/angular.js" ></script >
+    <style >
+        #parentCtrl {
+            background-color: yellow;
+            padding: 10px;
+        }
+
+        #childCtrl {
+            background-color: green;
+            padding: 10px;
+        }
+    </style >
+</head >
+<body >
+
+<p >We can access: {{ rootProperty }}</p >
+
+<div id="parentCtrl" ng-controller="ParentCtrl" >
+    <p >We can access: {{ rootProperty }} and {{ parentProperty }}</p >
+<!--注意，还有其他内置指令（比如ng-include和ng-view）也会创建新的子作用域，这意味着
+它们在被调用时行为和ng-controller类似。我们在构造自定义指令时也可以创建新的子作用域。-->
+    <div id="childCtrl" ng-controller="ChildCtrl" >
+        <p >
+            We can access:
+            {{ rootProperty }} and
+            {{ parentProperty }} and
+            {{ childProperty }}
+        </p >
+
+        <p >{{ fullSentenceFromChild }}</p >
+    </div >
+</div >
+
+<script >
+    angular.module('myApp', [])
+            .run(function ($rootScope) {
+                // use .run to access $rootScope
+                $rootScope.rootProperty = 'root scope';
+            })
+            .controller('ParentCtrl', function ($scope) {
+                // use .controller to access properties inside `ng-controller`
+                // in the DOM omit $scope, it is inferred based on the current controller
+                $scope.parentProperty = 'parent scope';
+            })
+            .controller('ChildCtrl', function ($scope) {
+                $scope.childProperty = 'child scope';
+                // just like in the DOM, we can access any of the properties in the
+                // prototype chain directly from the current $scope
+                $scope.fullSentenceFromChild = 'Same $scope: We can access: ' +
+                        $scope.rootProperty + ' and ' +
+                        $scope.parentProperty + ' and ' +
+                        $scope.childProperty
+            });
+</script >
+
+</body >
+</html >

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <script src="../../components/angular.js"></script>
+    <script src="../../components/angular-route.js"></script>
+    <script >
+       // 要把ngRoute模块在我们的应用中当作依赖加载进来
+        angular.module("myApp",[ngRoute]);
+
+    </script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<pre><h2>
+        ng-view是由ngroute模块提供的一个特殊指令，它的独特作用是在html中给$route对应的
+视图内容占位。
+    它会创建自己的作用域并将模板嵌套在内部。
+    mg-view是一个优先级为1000的终极指令。 angularjs不会运行同一个元素上的
+低优先级指令（例如<div ng-view></div>元素上其他指令都是没有意义的）。
+    ngview指令遵循以下规则。
+     每次触发$routechangesuccess事件，视图都会更新。
+     如果某个模板同当前的路由相关联：
+         创建一个新的作用域；
+         移除上一个视图，同时上一个作用域也会被清除；
+         将新的作用域同当前模板关联在一起；
+         如果路由中有相关的定义，那么就把对应的控制器同当前作用域关联起来；
+         触发$viewcontentloaded事件；
+         如果提供了onload属性，调用该属性所指定的函数。
+</h2></pre>
+        <header>
+            <h1>Header</h1>
+        </header>
+        <div class="content">
+            <!--通过将ng-view 指令和路由组合到一起，我们可以精确地指定当前路由所对应的模板在DOM中的渲染位置。-->
+            <div ng-view></div>
+        </div>
+        <footer>
+            <h5>Footer</h5>
+        </footer>
+
+</body>
+</html>

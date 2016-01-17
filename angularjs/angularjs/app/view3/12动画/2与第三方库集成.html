@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+<hr />
+<pre>
+    <h2>
+        22.11 与第三方库集成
+        22.11.1 Animate.css
+            Animate.css库提供了一堆很酷很有趣的跨浏览器动画。它是一个了不起的库，给我们带来强
+        大的功能，并且无需做太多工作。
+               很幸运， Angular社区已经提供了一个机智的方法来把Animate.css类加到我们的Angular应用
+        中。要使用这个Animate.css的垫片，从https://github.com/yearofmoo/ngAnimate-animate.css上下载
+        animate.css和animate.js吧。只需在HTML中引用它们即可，如下所示：
+        &lt;!-- HTML的头部 -->
+        &lt;link rel="stylesheet" type="text/css" href="css/animate.css">
+        &lt;!-- HTML的主体 -->
+        &lt;script type="text/javascript" src="js/vendor/animate.js">&lt;/script>
+             至此，无需把ngAnimate当作我们应用的依赖项，只要把ngAnimate-animate.css当作依赖项包
+        含进来就可以了。这种替代方式能运行，是因为ngAnimate-animate.css模块默认就请求了
+        ngAnimate模块。
+             这个转换做完之后，我们就可以简单地通过ng-class指令来引用动画类了。
+             例如：
+        &lt;div class="animateMe"
+             ng-class="{'dn-fade':dn_fade}">
+        &lt;/div>
+             对于每个动画的可能性列表，敬请查阅说明文件①。
+        22.11.2 TweenMax/TweenLite
+             TweenLite和TweenMax是灵活而魔幻的库，它们是建模在ActionScript动画属性上的。要使用它们，
+        需要确认已经下载了Greensock库。
+             从 Greensock ② 下 载 它 ， 然 后 存 放 在 index.html 能 访 问 到 的 位 置 。 我 们 建 议 把 它 放 在
+        js/vendor/TweenMax.min.js这个地方，然后要确认在页面中引用了TweetMax库：
+                  &lt;script type="text/javascript" src="js/vendor/TweetMax.min.js">&lt;/script>
+             这些都建立好了之后，就可以开始了。要在我们的应用中包含Greensock动画，需要把动画
+        设置为使用JavaScript。在这种方式下，除了要简单地用JavaScript处理一下动画，基本就没有写
+        集成代码的必要了：
+        angular.module('myApp', ['ngAnimate'])
+                 .animation('scrollAside', function($window) {
+                  return {
+                          enter: function(element, done) {
+                             TweenMax.set(element, {
+                                 position: 'relative'
+                             });
+                    TweenMax.to(element, 1, {
+                            opacity: 0,
+                              width: 0
+                     });
+                  $window.setTimeout(done, 2000);
+                      }
+                 }
+          });
+        ——————————
+        ① https://github.com/yearofmoo/ngAnimate-animate.css/blob/master/README.md
+        ② http://www.greensock.com/
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+
+<hr />
+<pre>
+    <h2>
+        
+    </h2> 
+
+</pre>
+</body>
+</html>

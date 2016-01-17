@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <pre>
+        10.5 ngModel
+        ngModel是一个用法特殊的指令，它提供更底层的API来处理控制器内的数据。当我们在指令
+        中使用ngModel时能够访问一个特殊的API，这个API用来处理数据绑定、验证、 CSS更新等不实
+        际操作DOM的事情。
+        ngModel控制器会随ngModel被一直注入到指令中，其中包含了一些方法。为了访问
+        ngModelController必须使用require设置（像前面的例子中那样）：
+
+        angular.module('myApp')
+.directive('myDirective',function(){
+return {
+require: '?ngModel',
+link: function(scope, ele, attrs, ngModel) {
+if (!ngModel) return;
+// 现在我们的指令中已经有ngModelController的一个实例
+}
+};
+});
+如果不设置require选项， ngModelController就不会被注入到指令中。
+注意，这个指令没有隔离作用域。如果给这个指令设置隔离作用域，将导致内部ngModel无
+法更新外部ngModel的对应值： AngularJS会在本地作用域以外查询值。
+为了设置作用域中的视图值，需要调用ngModel.$setViewValue()函数。 ngModel.$set
+ViewValue()函数可以接受一个参数。
+value（字符串） ： value参数是我们想要赋值给ngModel实例的实际值。这个方法会更新控
+制器上本地的$viewValue，然后将值传递给每一个$parser函数（包括验证器）。
+当值被解析，且$parser流水线中所有的函数都调用完成后，值会被赋给$modelValue属性，
+并且传递给指令中ng-model属性提供的表达式。
+最后，所有步骤都完成后， $viewChangeListeners中所有的监听器都会被调用。
+注意，单独调用$setViewValue()不会唤起一个新的digest循环，因此如果想更新指令，需要
+在设置$viewValue后手动触发digest。
+$setViewValue()方法适合于在自定义指令中监听自定义事件（比如使用具有回调函数的
+jQuery插件），我们会希望在回调时设置$viewValue并执行digest循环。
+angular.module('myApp')
+.directive('myDirective', function() {
+return {
+require: '?ngModel',
+link: function(scope, ele, attrs, ngModel) {
+if (!ngModel) return;
+$(function() {
+ele.datepicker({
+onSelect: function(date) {
+// 设置视图和调用apply
+scope.$apply(function() {
+ngModel.$setViewValue(date);
+});
+}
+});
+});
+}
+};
+});
+
+
+<hr style="border:1px dashed gray;">
+
+
+    </pre>
+</body>
+</html>

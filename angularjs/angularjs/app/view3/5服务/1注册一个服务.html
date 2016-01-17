@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html  ng-app="myApp">
+<head lang="en">
+    <script src="../../components/angular-route.js"></script>
+    <meta charset="UTF-8">
+    <script >
+
+
+        //用$injector来创建和注册服务有好几种方式，使用angular.module的factory API创建服务，是最常见也是最灵活的方式：
+        angular.module('myApp.Service',[]).factory('githubService', function () {
+            var serviceInstance={};
+            //我们的第一个服务,尽管githubService没做什么有趣的事情，但现在它已经用githubService作为名字注册成
+           // 为这个AngularJS应用的一个服务了。
+            return serviceInstance;
+
+        })
+
+        //同创建控制器的方法一样，服务的工厂函数既可以是一个函数也可以是一个数组：
+        // 用方括号声明工厂
+            angular.module('myApp.services', [])
+                .factory('githubService', [function ($http) {
+                }]);
+
+        //thubService需要访问$http服务，所以我们将$http服务当作AngularJS应用的一个
+        // 依赖 ， 并将它注入到工厂函数中 。
+        // 现在， 无论何处需要访问GitHub API都不需要通过$http来进行了 ， 可以通过githubService
+        //  来代替 ， 并让它处理所有复杂的业务逻辑和远程服务 。
+        angular.module('myApp.services',[]).factory('githubService', function ($http) {
+                // 我们的serviceInstance现在可以在函数定义中访问$http服务
+                var serviceInstance = {};
+                return serviceInstance;
+            });
+
+        angular.module('myApp.services',[]).factory('githubService', function ($http) {
+            var githubUrl='http://api.github.com';
+            var runUserRequest= function (username, path) {
+                // 从使用JSONP调用Github API的$http服务中返回promise
+                return $http({
+                    method:'JSONP',
+                    url: githubUrl + '/users/' +
+                            username + '/' +
+                            path + '?callback=JSON_CALLBACK'
+                })
+            };
+            // 返回带有一个events函数的服务对象
+            return {
+                events: function (username) {
+                    return runUserRequest(username, 'events');
+                }
+            };
+        });
+            //githubService中只包含了一个方法，可以在应用的模块中调用。
+
+    </script>
+    <title></title>
+</head>
+<body>
+
+</body>
+</html>

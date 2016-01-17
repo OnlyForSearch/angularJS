@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <script src="../components/angular.js"></script>
+        <script >
+        /*最后，我们还要告诉Angular将ngMessages作为应用程序的依赖模块引入*/
+        var app = angular.module('myApp', ['ngMessages']);
+        /*此外，甚至还可以为自定义验证创建自定义消息。可以通过修改模型的 $ parsers链做到这
+         一点。
+         例如，比方说我们想要创建一个自定义验证器验证用户名在一个注册表单中是否有效*/
+     /*   app.directive('ensureUnipue', function ($http) {
+            return {
+                require: 'ngModel',
+                link: function (scope, ele, attrs, ctrl) {
+                    ctrl.$parsers.push(function (val) {
+                        // 在这里添加验证
+                    });
+                }
+            }
+        });*/
+
+        app.directive('ensureUnique', function ($http) {
+            return {
+                require: 'ngModel',
+                link: function (scope, ele, attrs, ctrl) {
+                    var url = attrs.ensureUnique;
+                    ctrl.$parsers.push(function (val) {
+                        if (!val || val.length === 0) {
+                            return;
+                        }
+                        ngModel.$setValidity('checkingAvailability', true);
+                        ngModel.$setValidity('usernameAvailablity', false);
+                        $http({
+                            method: 'GET',
+                            url: url,
+                            params: {
+                                username: val
+                            }
+                        }).success(function () {
+                            ngModel
+                                    .$setValidity('checkingAvailability', false);
+                            ngModel
+                                    .$setValidity('usernameAvailablity', true);
+                        })['catch'](function () {
+                            ngModel
+                                    .$setValidity('checkingAvailability', false);
+                            ngModel
+                                    .$setValidity('usernameAvailablity', false);
+                        });
+                        return val;
+                    })
+                }
+            }
+        });
+
+    </script>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--对于ngModel，你可以添加可以使用ngMessage指令显示/隐藏的自定义信息。还可以添加可
+以使用ngMessage指令检查的带有自定义的消息的指令。例如，改变前面使用ngMessages的例子。-->
+<form name="signup_form" novalidate ng-submit="signupForm()" ng-controller="signupController"
+      ensure-unique="/api/checkUsername.json">
+    <label>
+        Your name
+    </label>
+    <input type="text" placeholder="Username" name="username" ng-model="signup.username"
+           ng-minlength=3 ng-maxlength=20 required />
+
+    <div class="error" ng-messages="signup_form.username.$error">
+        <div ng-message="required">
+            Make sure you enter your username
+        </div>
+        <div ng-message="checkingAvailability">
+            Checking...
+        </div>
+        <div ng-message="usernameAvailablity">
+            The username has already been taken. Please choose another
+        </div>
+    </div>
+    <button type="submit">
+        Submit
+    </button>
+</form>
+</body>
+</html>

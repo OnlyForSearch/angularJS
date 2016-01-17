@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<pre>
+        <h2>
+
+            <hr />
+                 随着世界各地Web访问量的增加，作为开发者的我们也在不断让应用国际化、本地化。当用
+            户访问我们的应用时，他应该能够在运行时立即切换语言环境。
+                 鉴于我们正在开发的是AngularJS客户端应用，尤其不希望用户必须刷新页面或者访问一个
+            完全不同的URL。当然， AngularJS可以很容易地调整那些国际化读者的本机语言环境，或许通
+            过为不同语言生成不同模板的方式为应用提供服务。
+                    然而，这个过程可能会很麻烦，当我们想要改变应用的布局时会发生什么情况？每个独立的
+            模板都需要重新构建和部署。而这个过程应该是很简单才对。
+    27.1 angular-translate
+                  你可以使用angular-translate来替代创建新模板的方式，这个AngularJS模块为你的应用提
+            供了i18n（国际化）服务。 angular-translate要求创建一个JSON文件，它描述每种语言的翻译
+            数据。然后它只会在必要时从服务器延迟加载特定语言的翻译数据。
+                     angular-translate库自带了很多内置指令和过滤器，这让我们的应用国际化变得简单。我
+            们一起来学习一下。
+    27.2 安装
+            为了使用angular-translate，需要加载这个库。可以使用几种不同的方式安装它，但是推
+            荐使用Bower。
+        Bower是一个前端包管理器。它不仅能够处理JavaScript库，还可以处理HTML、 CSS以及图
+            片程序包。一个程序包就是一个简单的封装，典型的例子就是一个可公开访问的第三方代码库。
+         使用Bower
+            使用标准的Bower方法安装angular-translate：
+               $ bower install angular-translate
+            此外，你也可以从Github下载压缩版的angular-translate。
+    安装好最新稳定版本的angular-translate之后，你就可以简单地将它嵌入到你的HTML文
+            档中。只要确保它嵌入在Angular脚本之后，因为它依赖于angular库。
+            &lt;script src="path/to/angular.js">&lt;/script>
+            &lt;script src="path/to/angular-translate.js">&lt;/script>
+            最后一项要点是，在你的应用中必须将angular-translate声明为一个加载依赖：
+            var app = angular.module('myApp', ['pascalprecht.translate']);
+            很好！现在已经准备好使用angular-translate组件来翻译你的应用了。
+        27.3 教你的应用一种新语言
+                 安装好angular-translate后，将它声明为应用的依赖，这样才可以用它来翻译应用程序的
+            内容。
+                 首先，需要提供翻译数据，这样应用才能真正地说一种新的语言。这一步可以通过使用最新
+            的$translateProvider服务配置$translate服务实现。
+            培养应用使用一种新的语言很简单。只需在应用上使用config函数，为应用提供不同的语言
+            翻译（比如英语、德语、希伯来语等）。首先，需要将$translateProvider注入到配置函数中，
+            就像这样：
+                 angular.module('angularTranslateApp', ['pascalprecht.translate'])
+                .config(function($translateProvider) {
+                // 翻译会放到这里
+                });
+                 要添加一种语言，必须让$translateProvider找到一个翻译表格，这是一个JSON对象，它
+            包含将要翻译为具体值的消息（键）。使用翻译表格时允许我们将翻译数据编写为一个简单的
+            JSON文件，以便从远程加载或者在编译时设置，比如：
+                    {
+                           'MESSAGE': 'Hello world',
+                    }
+                    在翻译表格中，键（key）表示一个翻译ID，而其值表示某种语言特定的翻译数据。现在，
+            先给应用添加一个翻译表格。 $translateProvider提供了一个叫做translations()的方法来处
+            理它。
+                    app.config(function($translateProvider) {
+                         $translateProvider.translations({
+                               HEADLINE: 'Hello there, This is my awesome app!',
+                           INTRO_TEXT: 'And it has i18n support!'
+                    });
+            });
+                    有了这个翻译表格之后，应用就可以使用angular-translate了。由于这是在配置期间添加
+            的翻译表格，因此在angular-translate的组件被实例化时就能访问到这个翻译表格了。
+                 先切换到应用的模板部分。要将键绑定给视图很简单，只需添加翻译数据到视图层即可。使
+            用translate过滤器时，甚至不必接触控制器或者服务，或者无需担心视图层：因为你可以从任
+            何控制器或者服务中解耦翻译逻辑，并且无需接触业务逻辑代码就能让视图可替换。
+            从根本上说， translate过滤器的工作原理就像这样：
+            &lt;h2>{{ 'TRANSLATION_ID' | translate }}&lt;/h2>
+            也可以使用这个translate过滤器来更新示例应用程序：
+            &lt;h2>{{'HEADLINE' | translate }}&lt;/h2>
+
+            &lt;p>{{'INTRO_TEXT' | translate}}&lt;/p>
+            很好！现在可以翻译视图层中的内容了，并且还避免了翻译逻辑污染控制器逻辑；然而，即
+            使我们不使用angular-translate也能得到完全相同的结果，因为在这个示例应用中只涉及一种
+            语言。
+            接下来我们一起看看angular-translate真正的能力，然后学习如何教应用多种语言。
+            <hr />
+    27.4 多语言支持
+                  前面我们已经通过translations()方法为应用添加了一个翻译表格。
+                 正如translations()方法所设置的， $translateProvider识别了一种语言。现在，可以通
+            过提供第二个翻译表格以同样的方式添加一种新的语言。
+                 设置第一个翻译表格时，我们可以给它提供一个键（语言键）来指定我们要翻译的语言。这
+            样可以使用不同的语言键添加不同的翻译。
+            更新一下应用，让它包含第二种语言：
+                        app.config(function($translateProvider) {
+                                $translateProvider.translations('en_US', {
+                                HEADLINE: 'Hello there, This is my awesome app!',
+                                INTRO_TEXT: 'And it has i18n support!'
+                           });
+                        });
+                  为了给不同语言添加附加的翻译表格，比方说德语，我们只需使用不同的语言键做同样的事
+            情就行了。
+                    app.config(function($translateProvider) {
+                            $translateProvider.translations('en', {
+                                HEADLINE: 'Hello there, This is my awesome app!',
+                                INTRO_TEXT: 'And it has i18n support!'
+                    })
+                    .translations('de', {
+                            HEADLINE: 'Hey, das ist meine großartige App!',
+                            INTRO_TEXT: 'Und sie untersützt mehrere Sprachen!'
+                         });
+                    });
+                现在，应用能识别两种不同的语言了。你可以根据需要随意添加尽可能多的语言；但是，现
+            在这里有了两种有效的语言，那么应用如何知道该使用哪种语言呢？在你告诉它应该怎么做之
+            前， angular-translate不会推荐任何语言。
+                要设置首选语言，你可以使用$translateProvider.preferredLanguage()方法。这个方法
+            会告诉angular-translate哪种已注册语言是应用默认应该使用的语言。它要求使用一个语言键
+            值作为参数，这个参数指向某个翻译表格。
+                 现在，我们来告诉应用应该使用英语作为默认语言：
+            app.config(function($translateProvider) {
+                    $translateProvider.translations('en', {
+                    HEADLINE: 'Hello there, This is my awesome app!',
+                    INTRO_TEXT: 'And it has i18n support!'
+            })
+            .translations('de', {
+                  HEADLINE: 'Hey, das ist meine großartige App!',
+                   INTRO_TEXT: 'Und sie untersützt mehrere Sprachen!'
+            });
+                  $translateProvider.preferredLanguage('en');
+            });
+
+            <hr />
+            27.5 运行时切换语言
+                  要在运行时切换到一种新语言，必须使用angular-translate的$translate服务。它有一个
+            use()方法，这个方法要么返回一个当前正在使用的语言对应的语言键，或者传递一个语言键作
+            为参数，这个参数会让angular-translate使用该参数对应的语言。
+                  为了感受一下如何在真实的应用中运用这一功能，我们可以添加两个表示译文的翻译ID，稍
+            后添加到HTML模板中的按钮会用到这两个ID：
+            app.config(function($translateProvider) {
+                    $translateProvider.translations('en', {
+                    HEADLINE: 'Hello there, This is my awesome app!',
+                    INTRO_TEXT: 'And it has i18n support!',
+                    BUTTON_TEXT_EN: 'english',
+                    BUTTON_TEXT_DE: 'german'
+            })
+            .translations('de', {
+            HEADLINE: 'Hey, das ist meine großartige App!',
+                    INTRO_TEXT: 'Und sie untersützt mehrere Sprachen!'
+                    BUTTON_TEXT_EN: 'englisch',
+                    BUTTON_TEXT_DE: 'deutsch'
+            });
+            $translateProvider.preferredLanguage('en');
+            });
+                 接下来，我们要使用$translate服务和它的use()方法在控制器上实现一个方法以便在运行
+            时改变语言。为此，要将$translate服务注入到应用的控制器中，然后添加一个函数给它的
+            $scope对象：
+            app.controller('TranslateController', function($translate, $scope) {
+                    $scope.changeLanguage = function(langKey) {
+                    $translate.use(langKey);
+            }
+            });
+                  接着，我们通过为每种语言添加一个按钮的方式在HTML模板中反映这一变化。还必须在每
+            个按钮上设置一个ng-click指令在运行时调用改变语言的函数。
+            &lt;div ng-controller="TranslateController">
+                &lt;button ng-click="changeLanguage('de')" translate="BUTTON_TEXT_DE">&lt;/button>
+                &lt;button ng-click="changeLanguage('en')" translate="BUTTON_TEXT_EN">&lt;/button>
+            &lt;/div>
+            瞧瞧！现在我们就拥有一个支持多语言的应用了。
+
+            <hr />
+            27.6 加载语言
+                  如果我们只是设置静态语言那多没劲啊！多亏了Angular的$http服务，我们可以通过
+            $translateProvider的registerLoader方法来动态加载语言。
+                    首先，需要安装angular-translate-loader-url扩展来设置loader-url服务，它要求有一
+            个后端服务器通过处理lang参数的方式返回JSON数据。如果你已经有一个处理带lang参数路由
+            的后端程序，那么可以像这样使用Bower安装loader-url服务：
+                $ bower install angular-translate-loader-url
+                如果你更喜欢使用服务来加载静态文件，那么可以使用static-files加载器从语言路径中
+            加载JSON文件。由于这个路由程序很简单，这里将继续使用Bower来安装这个服务：
+                bower install angular-translate-loader-static-files
+                现在，先让我们确保已经使用script标签将这个文件载入视图中了：
+
+            &lt;script src="/js/angular-translate-loader-url.min.js">&lt;/script>
+
+            为了配置服务以使用这个static-files加载器，你需要让$translateProvider使用一个配
+            置对象来启用这个加载器。这个配置对象接受两个参数：
+                 prefix指定文件前缀（含文件路径）；
+                 suffix指定文件后缀（常见的扩展名）。
+             这个加载器试图从如下URL路径中获取文件： [prefix]/[langKey]/[suffix]。比如，如果
+            设置配置对象为：
+                $translateProvider.useStaticFilesLoader({
+                    prefix: '/languages/',
+                    suffix: '.json'
+                });
+                  angular-translate 会 试 图 从 /languages/en_US.json 中 加 载 en_US 语 言 。 像 这 样 使 用
+            StaticFilesLoader时就带来了延迟加载的额外好处。在运行时$translate只会在需要语言文件
+            时才加载它。
+                   当然，应用加载时，异步加载会导致未翻译的内容闪现。可以通过将应用自带语言设置为默
+            认语言的方式规避这一副作用。
+                 最后还有一个很酷的特性：可以使用本地存储（local storage）功能存储语言文件。
+            angular-translate提供了使用本地存储的能力；你可以用一个函数来启用这一功能：
+                 .config(function($translateProvider) {
+                    $translateProvider.useLocalStorage();
+                    });
+
+                  至此我们已经介绍了如何使用anguar-translate的$translateProvider.translations()
+            方法和translate过滤器为Angular应用提供i18n支持。此外还展示了如何使用$translate服务以
+            及它的use()方法在运行时改变语言。
+                 你可以尝试一下angular-translate。它提供了很多非常棒的特性，比如处理多元化，使用
+            自定义加载器和通过服务设置翻译。它的文档非常出色，建议你在这里①查看它们。
+                    那里还有很多可以直接用于你的站点的示例。同时它还是一个展示了所有可用组件和接口的
+            API参考手册②，这些都可以用于构建了不起的带有国际化支持的应用
+
+            ① http://pascalprecht.github.io/angular-translate
+            ② http://pascalprecht.github.io/angular-translate/#/api
+
+            
+            <hr />
+
+            27.8 安装
+            为了使用angular-gettext，首先需要加载anglar-gettext库。虽然可以使用几种不同的方
+            式安装它，但是我们推荐使用Bower。
+             使用Bower
+            可以像这样使用Bower安装angular-gettext：
+            $ bower install --save angular-gettext
+            此外，你也可以从Github下载压缩版的angular-gettext。
+            安装了最新的稳定版的angular-gettext之后，就可以简单的将它嵌入到HTML文档中。只
+            需要确保在Angular之后嵌入，因为它依赖于核心的angular 库以及jquery（ 因为它也是
+            angular-gettext的依赖项）。
+            &lt;script src="path/to/jquery.js">&lt;/script>
+            &lt;script src="path/to/angular.js">&lt;/script>
+            &lt;script src="path/to/angular-gettext.js">&lt;/script>
+            最后一项要点是，在你的应用中必须将angular-gettext声明为一个加载依赖：
+            var app = module('myApp', ['angular-gettext']);
+            现在就已准备好使用angular-gettext的组件来翻译你的应用了。
+
+            27.9 用法
+            angular-gettext库包含translate指令，这是一个简单的指令，它可以被放置在那些包含
+            你想要翻译的字符串的DOM元素上。
+            &lt;h1 translate>Hello!&lt;/h1>
+
+            &lt;h1>的内容将使用我们稍后会定义的字符串译本自动翻译。
+                与普通的字符串相比，待翻译的字符串也会以同样的方式处理， angular-gettext提供的功
+                能完全支持从应用内部插值。
+                &lt;h1 translate>Hello {{name}}&lt;/h1>
+                这还可以支持翻译复数表示法。例如，比如你想要将apple翻译为它的复数形式apples。
+                &lt;h1 translate>One apple&lt;/h1>
+                你可以添加两个甚至更多指令给
+                &lt;h1>元素，来表示当前计数以及要翻译的最终字符串。
+                    &lt;h1 translate
+                        translate-n="count"
+                        translate-plural="{{ count }} apples">
+                        One apple
+                    &lt;/h1>
+                    如果translate-n表达式的结果大于1，那么gettext就使用translate-pural中的字符串；
+                    否则，它使用DOM元素
+                    &lt;h1>的值。
+                        这个附加的translate-n指令接受任意形式的Angular表达式，包括函数。关于表达式的更多
+                        信息，请查看第6章。
+                        translate-pural就是一个简单的字符串，它会在这个指令被调用时替换DOM元素内的值。
+                        最后，你还可以在应用内使用translate过滤器。因为有时候我们不能使用指令，例如：
+                        &lt;input type="text" placeholder="Username" />
+                        还可以使用translate过滤器来替换占位符中Username的值。
+                        &lt;input type="text" placeholder="{{'Username' | translate }}" />
+
+
+
+            
+            <hr />
+
+            27.10 字符串提取
+                   现在，我们不再提前提供需要翻译的字符串，而是从模版中提取字符串来构建翻译。我们将
+            会生成一个.pot文件，也就是标准的gettext模板。
+                  要提取那些要翻译的字符串， 最简单的方法就是使用grunt-angular-gettext工具。
+            关于Grunt的更多信息，请查看34.3节。
+                 为了使用grunt-angular-gettext这个Grunt任务，首先需要使用npm安装它：
+            $ npm install grunt-angular-gettext --save-dev
+                  这个Grunt任务安装好之后，还需要在Gruntfile中加载它。使用标准的Grunt方法引用Grunt
+            任务时，可以像这样在Gruntfile内部启用它：
+            grunt.loadNpmTasks('grunt-angular-gettext');
+                  设置好之后，还需要从应用中提取要翻译的字符串。可以使用nggettext_extract任务做到。
+            为了设置这个任务，需要提供相应的配置信息。
+              实际上，在nggettext_extract任务中最重要的是files属性：
+                grunt.initConfig({
+                    nggettext_extract: {
+                        pot: {
+                        files: {
+                        'po/template.pot': ['src/view/*.html']
+                        }
+                        }
+                }
+            });
+             此外，还可以在任务中包含一些选项，设置起始和终止标识符。如果要配置Angular使用不
+            同的分隔符，那么可以在这个任务中设置这些选项：
+            grunt.initConfig({
+                    nggettext_extract: {
+                    pot: {
+                    options: {
+                    startDelim: '//',
+                    endDelim: '//'
+                    },
+                 files: {
+                    'po/template.pot': ['src/view/*.html']
+                    }
+                    }
+                    }
+            });
+            这样，就可以使用Grunt运行这个任务了，就像这样：
+            $ grunt nggettext_extract
+            这个任务运行完成后，将会得到一个po/template.pot文件。例如，对于这个模板：
+            &lt;div ng-controller="HomeController">
+                &lt;h1 translate>Hello {{ user.name }}&lt;/h1>
+
+                &lt;h2 translate translate-n="count" translate-plural="{{ count }} books">{{ count }} books
+                &lt;/h2>
+            &lt;/div>
+            这会得到一个po/template.pot文件，它看起来像：
+            msgid ""
+            msgstr ""
+            "Content-Type: text/plain; charset=UTF-8\n"
+            "Content-Transfer-Encoding: 8bit\n" 
+            
+            <hr />
+            翻译字符串
+                   现在我们已经有准备好的.pot文件了，可以开始翻译它了。使用开源软件的一个主要原因是
+            可以使用很多工具为我们有效地创建翻译数据。
+                    这里将重点关注如何使用Poedit工具，这是一个能够编辑.pot文件的开源工具。
+                    首先，我们需要下载这个工具。可以从Poedit网站www.poedit.net①得到它。
+                   安装好这个工具后，就可以打开应用程序，然后选择“文件→新建POT文件…”，如图27-1
+            所示。
+            图27-1 新建POT文件
+            从这里，可以找到文件并选择它。要确保包含如下复数形式，如图27-2所示。
+            选择OK，然后你应该被带入一个显示要翻译的字符串的界面。然后应该针对特定的语言填
+            ——————————
+            ① http://www.poedit.net/
+
+            写这些字符串。
+            例如，如果想将应用翻译成西班牙语，就应该使用es语言。然后按照gettext的约定将它另
+            存为es.po文件存储在templates.pot所在的目录，如图27-3所示。
+            图27-3 翻译应用
+            完成编辑工作之后，可以保存这个文件，然后继续。
+            如果对应用做出了改变，可以简单地重新运行Grunt，然后在Poedit中选择“更
+            新POT文件...”。这个步骤会更新新字符串，移除旧值，然后指出变化的部分，
+            如图27-4所示。
+            图27-4 翻译应用
+
+
+            <hr />
+
+            27.12 编译新语言
+            最后，可以使用新的已编译好的语言格式来生成新的translation.js文件。
+            在此期间会多次使用Grunt将.pot文件编译为在运行时使用的translation.js文件。
+            这里还需要添加一个新的任务： nggettext_compile任务，这个任务会获取你的.pot文件，
+            然后将它们包装为可以在应用中使用的语言。
+            基本的任务配置看起来像这样：
+            grunt.initConfig({
+                   nggettext_compile: {
+                        all: {
+                     files: {
+                     'app/scripts/translations.js': ['po/*.pot']
+                    },
+                    },
+                    }
+            })
+            这个配置会使用所有的po/*.pot文件生成app/scripts/translations.js文件。
+            也可以指定一个想要定义在translations内的特定模块，比如：
+            grunt.initConfig({
+            all: {
+            options: {
+            module: 'myApp.translations'
+            },
+            files: {
+            'app/scripts/translations.js': ['po/*.pot']
+            },
+            },
+            }
+            })
+            建议设置一个Grunt任务来调用这两个nggettext_*函数，比如grunt.register
+            Task ('default', ['nggettext_extract', 'nggettext_compile']);。
+            现在，运行Grunt任务时，它会为我们生成translations.js文件。而我们只需要将这个文件包含
+            在运行时的.html文件中，然后应用就已经做好翻译的准备了。
+
+            27.13 改变语言
+                  至此我们已经设置好语言了，然后可以使用这些翻译来支持不同的语言。
+                    gettext模块还包含一个叫做gettextCatalog的服务，这个服务可以注入到应用中设置当前
+            语言。为了设置默认语言，可以简单地调用它：
+                angular.module('myApp')
+                      .run(function(gettextCatalog) {
+                gettextCatalog.currentLanguage = 'es';
+                });
+                  上面这段代码会把应用程序的内容当作西班牙语加载。
+                     注意，也可以在系统运行时做同样的事情，只需将gettextCatalog注入到Angular对象中，
+            就像这样：
+                    .controller('HomeController', function($scope, gettextCatalog) {
+                            $scope.user = { name: "Ari" };
+                            $scope.count = 1;
+                            $scope.changeLanguage = function() {
+                            gettextCatalog.currentLanguage = 'es';
+                    };
+                    })
+
+
+            英文状态，如图27-5所示。
+
+            改变语言之后的西班牙语，如图27-6
+            <hr />
+            <hr />
+            <hr />
+            <hr />
+            <hr />
+
+
+        </h2>
+        </pre>
+
+
+</body>
+</html>
